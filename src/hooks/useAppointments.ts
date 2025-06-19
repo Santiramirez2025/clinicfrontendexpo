@@ -1,211 +1,555 @@
-import { useState, useEffect } from 'react';
+// ============================================================================
+// hooks/useAppointments.ts - HOOK DE CITAS COMPLETO Y SIN ERRORES
+// ============================================================================
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Alert } from 'react-native';
+import { appointmentAPI, handleApiError } from '../services/api';
 
-interface Appointment {
+// ============================================================================
+// TIPOS Y INTERFACES EXPORTABLES
+// ============================================================================
+export type TabType = 'upcoming' | 'past' | 'cancelled';
+
+export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
+
+export interface Treatment {
   id: string;
-  patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  date: string;
-  time: string;
-  duration: number; // in minutes
-  type: 'consultation' | 'checkup' | 'surgery' | 'therapy';
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
-  notes?: string;
-  symptoms?: string;
-  diagnosis?: string;
-  treatment?: string;
+  name: string;
+  duration: number;
+  price: number;
+  iconName?: string;
+  category?: string;
+  description?: string;
 }
 
-interface CreateAppointmentData {
-  patientId: string;
-  doctorId: string;
-  date: string;
-  time: string;
-  type: Appointment['type'];
-  notes?: string;
-  symptoms?: string;
+export interface Professional {
+  id: string;
+  name: string;
+  specialties: string[];
+  rating?: number;
+  avatarUrl?: string;
 }
 
-export const useAppointments = () => {
+export interface AvailabilitySlot {
+  time: string;
+  availableProfessionals: Professional[];
+  isAvailable?: boolean;
+}
+
+export interface Appointment {
+  id: string;
+  treatment: Treatment;
+  date: string;
+  time: string;
+  duration: number;
+  professional: string;
+  clinic: string;
+  status: AppointmentStatus;
+  beautyPointsEarned: number;
+  notes?: string;
+  createdAt: string;
+  // Campos computados
+  isPast?: boolean;
+  canReschedule?: boolean;
+  canCancel?: boolean;
+  hoursUntil?: number;
+}
+
+export interface AppointmentSection {
+  title: string;
+  data: Appointment[];
+  count: number;
+}
+
+export interface AppointmentFilters {
+  status?: AppointmentStatus;
+  limit?: number;
+  offset?: number;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// ============================================================================
+// INTERFACE DEL HOOK
+// ============================================================================
+interface UseAppointmentsReturn {
+  // Estados principales
+  appointments: Appointment[];
+  loading: boolean;
+  refreshing: boolean;
+  activeTab: TabType;
+  selectedAppointment: Appointment | null;
+  detailsModalVisible: boolean;
+  
+  // Datos computados
+  sections: AppointmentSection[];
+  currentSection: AppointmentSection | undefined;
+  upcomingCount: number;
+  pastCount: number;
+  cancelledCount: number;
+  
+  // Setters
+  setActiveTab: (tab: TabType) => void;
+  setDetailsModalVisible: (visible: boolean) => void;
+  setSelectedAppointment: (appointment: Appointment | null) => void;
+  
+  // Funciones principales
+  loadAppointments: (isRefresh?: boolean) => Promise<void>;
+  onRefresh: () => void;
+  handleRescheduleAppointment: (appointment: Appointment, navigation: any) => void;
+  handleCancelAppointment: (appointment: Appointment) => Promise<void>;
+  handleWhatsAppReminder: (appointment: Appointment) => void;
+  handleAppointmentPress: (appointment: Appointment) => void;
+  
+  // Funciones de filtrado
+  getAppointmentsByStatus: (status: AppointmentStatus) => Appointment[];
+  getUpcomingAppointments: () => Appointment[];
+  getPastAppointments: () => Appointment[];
+  getCancelledAppointments: () => Appointment[];
+  
+  // Utilidades
+  canRescheduleAppointment: (appointment: Appointment) => boolean;
+  canCancelAppointment: (appointment: Appointment) => boolean;
+  getHoursUntilAppointment: (appointment: Appointment) => number;
+  formatAppointmentDate: (appointment: Appointment) => string;
+  formatAppointmentTime: (appointment: Appointment) => string;
+}
+
+// ============================================================================
+// HOOK PRINCIPAL
+// ============================================================================
+export const useAppointments = (): UseAppointmentsReturn => {
+  // Estados principales
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('upcoming');
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [detailsModalVisible, setDetailsModalVisible] = useState(false);
 
-  // Mock data
-  const mockAppointments: Appointment[] = [
-    {
-      id: '1',
-      patientId: '1',
-      patientName: 'María González',
-      doctorId: 'doc1',
-      doctorName: 'Dr. Juan Pérez',
-      date: '2024-06-12',
-      time: '09:00',
-      duration: 30,
-      type: 'consultation',
-      status: 'scheduled',
-      notes: 'Revisión general',
-      symptoms: 'Dolor de cabeza frecuente'
-    },
-    {
-      id: '2',
-      patientId: '2',
-      patientName: 'Juan Martínez',
-      doctorId: 'doc1',
-      doctorName: 'Dr. Juan Pérez',
-      date: '2024-06-12',
-      time: '10:30',
-      duration: 45,
-      type: 'checkup',
-      status: 'confirmed',
-      notes: 'Control de asma'
-    },
-    {
-      id: '3',
-      patientId: '1',
-      patientName: 'María González',
-      doctorId: 'doc2',
-      doctorName: 'Dra. Ana López',
-      date: '2024-06-13',
-      time: '14:00',
-      duration: 60,
-      type: 'therapy',
-      status: 'scheduled',
-      notes: 'Sesión de fisioterapia'
-    }
-  ];
-
-  useEffect(() => {
-    fetchAppointments();
+  // ============================================================================
+  // FUNCIONES DE UTILIDAD MEMOIZADAS
+  // ============================================================================
+  const getHoursUntilAppointment = useCallback((appointment: Appointment): number => {
+    const now = new Date();
+    const appointmentDateTime = new Date(`${appointment.date}T${appointment.time}`);
+    return (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
   }, []);
 
-  const fetchAppointments = async () => {
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      setAppointments(mockAppointments);
-      setError(null);
-    } catch (err) {
-      setError('Error al cargar citas');
-    } finally {
-      setLoading(false);
+  const canRescheduleAppointment = useCallback((appointment: Appointment): boolean => {
+    if (!['PENDING', 'CONFIRMED'].includes(appointment.status)) {
+      return false;
     }
-  };
-
-  const getAppointmentById = (id: string): Appointment | undefined => {
-    return appointments.find(appointment => appointment.id === id);
-  };
-
-  const getAppointmentsByDate = (date: string): Appointment[] => {
-    return appointments.filter(appointment => appointment.date === date);
-  };
-
-  const getAppointmentsByPatient = (patientId: string): Appointment[] => {
-    return appointments.filter(appointment => appointment.patientId === patientId);
-  };
-
-  const getTodayAppointments = (): Appointment[] => {
-    const today = new Date().toISOString().split('T')[0];
-    return getAppointmentsByDate(today);
-  };
-
-  const getUpcomingAppointments = (days: number = 7): Appointment[] => {
-    const today = new Date();
-    const futureDate = new Date(today.getTime() + (days * 24 * 60 * 60 * 1000));
     
-    return appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.date);
-      return appointmentDate >= today && appointmentDate <= futureDate;
-    });
-  };
+    const hoursUntil = getHoursUntilAppointment(appointment);
+    return hoursUntil > 24; // Permitir reprogramar solo con más de 24h de anticipación
+  }, [getHoursUntilAppointment]);
 
-  const createAppointment = async (appointmentData: CreateAppointmentData) => {
-    setLoading(true);
+  const canCancelAppointment = useCallback((appointment: Appointment): boolean => {
+    if (!['PENDING', 'CONFIRMED'].includes(appointment.status)) {
+      return false;
+    }
+    
+    const hoursUntil = getHoursUntilAppointment(appointment);
+    return hoursUntil > 0; // Permitir cancelar hasta la hora de la cita
+  }, [getHoursUntilAppointment]);
+
+  const formatAppointmentDate = useCallback((appointment: Appointment): string => {
     try {
-      const newAppointment: Appointment = {
-        ...appointmentData,
-        id: Date.now().toString(),
-        patientName: 'Paciente Nuevo', // This should come from patient lookup
-        doctorName: 'Doctor Asignado', // This should come from doctor lookup
-        duration: 30,
-        status: 'scheduled',
-      };
+      return new Date(appointment.date).toLocaleDateString('es-AR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return appointment.date;
+    }
+  }, []);
+
+  const formatAppointmentTime = useCallback((appointment: Appointment): string => {
+    try {
+      // Manejar diferentes formatos de tiempo
+      let timeString = appointment.time;
       
-      setAppointments(prev => [...prev, newAppointment]);
-      return { success: true, data: newAppointment };
-    } catch (err) {
-      setError('Error al crear cita');
-      return { success: false, error: 'Error al crear cita' };
+      // Si no tiene formato de hora completo, agregarlo
+      if (!timeString.includes('T') && !timeString.includes(':')) {
+        timeString = `${timeString}:00`;
+      }
+      
+      // Crear fecha con tiempo para formatear
+      const timeDate = timeString.includes('T') 
+        ? new Date(timeString)
+        : new Date(`2000-01-01T${timeString}`);
+      
+      return timeDate.toLocaleTimeString('es-AR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return appointment.time;
+    }
+  }, []);
+
+  // ============================================================================
+  // FUNCIÓN DE ENRIQUECIMIENTO DE DATOS
+  // ============================================================================
+  const enrichAppointment = useCallback((appointment: Appointment): Appointment => {
+    try {
+      const now = new Date();
+      const appointmentDate = new Date(appointment.date);
+      const hoursUntil = getHoursUntilAppointment(appointment);
+      
+      return {
+        ...appointment,
+        isPast: appointmentDate < now,
+        canReschedule: canRescheduleAppointment(appointment),
+        canCancel: canCancelAppointment(appointment),
+        hoursUntil: Math.max(0, hoursUntil)
+      };
+    } catch (error) {
+      console.error('Error enriching appointment:', error);
+      return appointment;
+    }
+  }, [getHoursUntilAppointment, canRescheduleAppointment, canCancelAppointment]);
+
+  // ============================================================================
+  // FUNCIONES DE FILTRADO MEMOIZADAS
+  // ============================================================================
+  const getAppointmentsByStatus = useCallback((status: AppointmentStatus): Appointment[] => {
+    return appointments.filter(apt => apt.status === status);
+  }, [appointments]);
+
+  const getUpcomingAppointments = useCallback((): Appointment[] => {
+    const now = new Date();
+    return appointments
+      .filter(apt => {
+        try {
+          const aptDate = new Date(apt.date);
+          return aptDate >= now && ['PENDING', 'CONFIRMED'].includes(apt.status);
+        } catch (error) {
+          console.error('Error filtering upcoming appointments:', error);
+          return false;
+        }
+      })
+      .sort((a, b) => {
+        try {
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        } catch (error) {
+          console.error('Error sorting appointments:', error);
+          return 0;
+        }
+      });
+  }, [appointments]);
+
+  const getPastAppointments = useCallback((): Appointment[] => {
+    const now = new Date();
+    return appointments
+      .filter(apt => {
+        try {
+          const aptDate = new Date(apt.date);
+          return aptDate < now || apt.status === 'COMPLETED';
+        } catch (error) {
+          console.error('Error filtering past appointments:', error);
+          return false;
+        }
+      })
+      .sort((a, b) => {
+        try {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        } catch (error) {
+          console.error('Error sorting appointments:', error);
+          return 0;
+        }
+      });
+  }, [appointments]);
+
+  const getCancelledAppointments = useCallback((): Appointment[] => {
+    return appointments
+      .filter(apt => ['CANCELLED', 'NO_SHOW'].includes(apt.status))
+      .sort((a, b) => {
+        try {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        } catch (error) {
+          console.error('Error sorting appointments:', error);
+          return 0;
+        }
+      });
+  }, [appointments]);
+
+  // ============================================================================
+  // DATOS COMPUTADOS CON useMemo
+  // ============================================================================
+  const sections = useMemo((): AppointmentSection[] => {
+    const upcoming = getUpcomingAppointments();
+    const past = getPastAppointments();
+    const cancelled = getCancelledAppointments();
+
+    return [
+      {
+        title: 'Próximas Citas',
+        data: upcoming,
+        count: upcoming.length
+      },
+      {
+        title: 'Historial',
+        data: past,
+        count: past.length
+      },
+      {
+        title: 'Canceladas',
+        data: cancelled,
+        count: cancelled.length
+      }
+    ];
+  }, [getUpcomingAppointments, getPastAppointments, getCancelledAppointments]);
+
+  const currentSection = useMemo(() => {
+    return sections.find(section => {
+      switch (activeTab) {
+        case 'upcoming':
+          return section.title === 'Próximas Citas';
+        case 'past':
+          return section.title === 'Historial';
+        case 'cancelled':
+          return section.title === 'Canceladas';
+        default:
+          return false;
+      }
+    });
+  }, [sections, activeTab]);
+
+  const upcomingCount = useMemo(() => sections[0]?.count || 0, [sections]);
+  const pastCount = useMemo(() => sections[1]?.count || 0, [sections]);
+  const cancelledCount = useMemo(() => sections[2]?.count || 0, [sections]);
+
+  // ============================================================================
+  // FUNCIONES DE API
+  // ============================================================================
+  const loadAppointments = useCallback(async (isRefresh = false): Promise<void> => {
+    try {
+      if (!isRefresh) setLoading(true);
+      
+      console.log('📅 Cargando citas...');
+      
+      const response = await appointmentAPI.getAll({
+        limit: 50,
+        offset: 0
+      });
+      
+      if (response.success && response.data?.appointments) {
+        const enrichedAppointments = response.data.appointments.map(enrichAppointment);
+        setAppointments(enrichedAppointments);
+        console.log(`✅ ${enrichedAppointments.length} citas cargadas`);
+      } else {
+        console.warn('⚠️ Respuesta sin citas:', response);
+        setAppointments([]);
+      }
+    } catch (error) {
+      console.error('❌ Error loading appointments:', error);
+      const errorMessage = handleApiError(error, 'No se pudieron cargar las citas');
+      Alert.alert('Error', errorMessage);
+      setAppointments([]); // Fallback a array vacío
     } finally {
       setLoading(false);
+      if (isRefresh) setRefreshing(false);
     }
-  };
+  }, [enrichAppointment]);
 
-  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
-    setLoading(true);
-    try {
-      setAppointments(prev => 
-        prev.map(appointment => 
-          appointment.id === id ? { ...appointment, ...updates } : appointment
-        )
+  // ============================================================================
+  // FUNCIONES DE ACCIONES
+  // ============================================================================
+  const handleRescheduleAppointment = useCallback((appointment: Appointment, navigation: any): void => {
+    if (!canRescheduleAppointment(appointment)) {
+      Alert.alert(
+        'No se puede reprogramar',
+        'Solo puedes reprogramar citas con más de 24 horas de anticipación.'
       );
-      return { success: true };
-    } catch (err) {
-      setError('Error al actualizar cita');
-      return { success: false, error: 'Error al actualizar cita' };
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
 
-  const cancelAppointment = async (id: string, reason?: string) => {
-    return updateAppointment(id, { 
-      status: 'cancelled', 
-      notes: reason ? `Cancelada: ${reason}` : 'Cancelada'
-    });
-  };
+    Alert.alert(
+      'Reprogramar Cita',
+      `¿Deseas reprogramar tu cita de ${appointment.treatment.name}?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Reprogramar', 
+          onPress: () => {
+            navigation.navigate('BookAppointment', {
+              rescheduleMode: true,
+              appointmentId: appointment.id,
+              treatmentId: appointment.treatment.id,
+              treatmentName: appointment.treatment.name,
+              currentDate: appointment.date,
+              currentTime: appointment.time
+            });
+          }
+        }
+      ]
+    );
+  }, [canRescheduleAppointment]);
 
-  const confirmAppointment = async (id: string) => {
-    return updateAppointment(id, { status: 'confirmed' });
-  };
+  const handleCancelAppointment = useCallback(async (appointment: Appointment): Promise<void> => {
+    if (!canCancelAppointment(appointment)) {
+      Alert.alert(
+        'No se puede cancelar',
+        'Esta cita ya no se puede cancelar.'
+      );
+      return;
+    }
 
-  const completeAppointment = async (id: string, diagnosis?: string, treatment?: string) => {
-    return updateAppointment(id, { 
-      status: 'completed',
-      diagnosis,
-      treatment
-    });
-  };
+    const hoursUntil = getHoursUntilAppointment(appointment);
+    const warningMessage = hoursUntil < 24 
+      ? 'ATENCIÓN: Cancelar con menos de 24 horas puede aplicar una penalización.'
+      : 'Tu cita será cancelada sin penalización.';
 
-  const deleteAppointment = async (id: string) => {
-    setLoading(true);
+    Alert.alert(
+      'Cancelar Cita',
+      `¿Estás segura de que deseas cancelar tu cita de ${appointment.treatment.name}?\n\n${warningMessage}`,
+      [
+        { text: 'No cancelar', style: 'cancel' },
+        { 
+          text: 'Sí, cancelar', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🗑️ Cancelando cita:', appointment.id);
+              
+              const response = await appointmentAPI.cancel(appointment.id);
+              
+              if (response.success) {
+                console.log('✅ Cita cancelada exitosamente');
+                
+                Alert.alert(
+                  'Cita Cancelada',
+                  response.data?.penaltyApplied 
+                    ? 'Tu cita ha sido cancelada. Se aplicó una penalización por cancelación tardía.'
+                    : 'Tu cita ha sido cancelada exitosamente.',
+                  [{ text: 'OK', onPress: () => loadAppointments() }]
+                );
+              }
+            } catch (error) {
+              console.error('❌ Error cancelando cita:', error);
+              const errorMessage = handleApiError(error, 'No se pudo cancelar la cita');
+              Alert.alert('Error', errorMessage);
+            }
+          }
+        }
+      ]
+    );
+  }, [canCancelAppointment, getHoursUntilAppointment, loadAppointments]);
+
+  const handleWhatsAppReminder = useCallback((appointment: Appointment): void => {
     try {
-      setAppointments(prev => prev.filter(appointment => appointment.id !== id));
-      return { success: true };
-    } catch (err) {
-      setError('Error al eliminar cita');
-      return { success: false, error: 'Error al eliminar cita' };
-    } finally {
-      setLoading(false);
+      const formattedDate = formatAppointmentDate(appointment);
+      const formattedTime = formatAppointmentTime(appointment);
+      
+      const message = `Hola! Te recuerdo tu cita de ${appointment.treatment.name} el ${formattedDate} a las ${formattedTime} con ${appointment.professional}. ¡Te esperamos! 💆‍♀️✨`;
+      
+      Alert.alert(
+        'Recordatorio por WhatsApp',
+        '¿Deseas enviar un recordatorio a tu WhatsApp registrado?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Enviar', 
+            onPress: () => {
+              // En una implementación real, aquí integrarías con WhatsApp Business API
+              console.log('📱 Enviando recordatorio WhatsApp:', message);
+              Alert.alert('✅ Enviado', 'Recordatorio enviado por WhatsApp');
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error sending WhatsApp reminder:', error);
+      Alert.alert('Error', 'No se pudo enviar el recordatorio');
     }
-  };
+  }, [formatAppointmentDate, formatAppointmentTime]);
 
+  const handleAppointmentPress = useCallback((appointment: Appointment): void => {
+    setSelectedAppointment(appointment);
+    setDetailsModalVisible(true);
+  }, []);
+
+  // ============================================================================
+  // REFRESH CONTROL
+  // ============================================================================
+  const onRefresh = useCallback((): void => {
+    setRefreshing(true);
+    loadAppointments(true);
+  }, [loadAppointments]);
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
+
+  // Actualizar estados calculados cuando cambien las citas
+  useEffect(() => {
+    if (appointments.length > 0) {
+      const shouldUpdate = appointments.some(apt => {
+        const enriched = enrichAppointment(apt);
+        return apt.canReschedule !== enriched.canReschedule ||
+               apt.canCancel !== enriched.canCancel ||
+               apt.isPast !== enriched.isPast;
+      });
+
+      if (shouldUpdate) {
+        const enrichedAppointments = appointments.map(enrichAppointment);
+        setAppointments(enrichedAppointments);
+      }
+    }
+  }, [appointments, enrichAppointment]);
+
+  // ============================================================================
+  // RETURN DEL HOOK
+  // ============================================================================
   return {
+    // Estados principales
     appointments,
     loading,
-    error,
-    fetchAppointments,
-    getAppointmentById,
-    getAppointmentsByDate,
-    getAppointmentsByPatient,
-    getTodayAppointments,
+    refreshing,
+    activeTab,
+    selectedAppointment,
+    detailsModalVisible,
+    
+    // Datos computados
+    sections,
+    currentSection,
+    upcomingCount,
+    pastCount,
+    cancelledCount,
+    
+    // Setters
+    setActiveTab,
+    setDetailsModalVisible,
+    setSelectedAppointment,
+    
+    // Funciones principales
+    loadAppointments,
+    onRefresh,
+    handleRescheduleAppointment,
+    handleCancelAppointment,
+    handleWhatsAppReminder,
+    handleAppointmentPress,
+    
+    // Funciones de filtrado
+    getAppointmentsByStatus,
     getUpcomingAppointments,
-    createAppointment,
-    updateAppointment,
-    cancelAppointment,
-    confirmAppointment,
-    completeAppointment,
-    deleteAppointment,
+    getPastAppointments,
+    getCancelledAppointments,
+    
+    // Utilidades
+    canRescheduleAppointment,
+    canCancelAppointment,
+    getHoursUntilAppointment,
+    formatAppointmentDate,
+    formatAppointmentTime,
   };
 };

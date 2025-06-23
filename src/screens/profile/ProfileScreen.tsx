@@ -1,5 +1,5 @@
 // ============================================================================
-// screens/profile/ProfileScreen.tsx - SINTAXIS CORREGIDA
+// screens/profile/ProfileScreen.tsx - REORGANIZADO
 // ============================================================================
 import React from 'react';
 import {
@@ -21,26 +21,19 @@ import { useProfileActions } from '../../hooks/useProfileActions';
 import { ProfileHeader } from '../../components/profile/ProfileHeader';
 import { SectionHeader } from '../../components/profile/SectionHeader';
 import { InputField } from '../../components/profile/InputField';
-import { TagSelector } from '../../components/profile/TagSelector';
-import { NotesInput } from '../../components/profile/NotesInput';
-import { ClinicSelector } from '../../components/profile/ClinicSelector';
 import { NotificationToggle } from '../../components/profile/NotificationToggle';
 import { SaveButton } from '../../components/profile/SaveButton';
 import { LegalCard } from '../../components/profile/LegalCard';
 import { ActionButton } from '../../components/profile/ActionButton';
 import { ClinicSelectionModal } from '../../components/profile/ClinicSelectionModal';
 
-// Componentes avanzados (comentados por ahora para evitar errores)
-// import { ProfileStatsCard } from '../../components/profile/ProfileStatsCard';
-// import { InviteFriendCard } from '../../components/profile/InviteFriendCard';
-// import { ChangePasswordCard } from '../../components/profile/ChangePasswordCard';
-// import { RecentActivityCard } from '../../components/profile/RecentActivityCard';
-// import { SkinTypeSelector } from '../../components/profile/SkinTypeSelector';
+// Componentes avanzados
+import { ProfileStatsCard } from '../../components/profile/ProfileStatsCard';
+import { InviteFriendCard } from '../../components/profile/InviteFriendCard';
 
 // Estilos y constantes
 import { profileStyles } from '../../components/profile/styles';
 import { modernColors } from '../../styles';
-import { treatmentOptions, scheduleOptions } from '../../components/profile/constants';
 
 // ============================================================================
 // COMPONENTE PRINCIPAL
@@ -77,9 +70,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     handleOpenPrivacyPolicy
   } = useProfileActions();
 
-  // ============================================================================
-  // RENDER LOADING
-  // ============================================================================
   if (loading) {
     return (
       <SafeAreaView style={profileStyles.container}>
@@ -91,9 +81,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     );
   }
 
-  // ============================================================================
-  // RENDER PRINCIPAL
-  // ============================================================================
   return (
     <SafeAreaView style={profileStyles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={modernColors.backgroundWarm} />
@@ -166,55 +153,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Preferencias Estéticas */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Preferencias de Tratamientos"
-            subtitle="Selecciona tus tratamientos favoritos"
-            icon="✨"
-          />
-          
-          <View style={profileStyles.sectionContent}>
-            <TagSelector
-              label="Tipos de tratamientos que te interesan"
-              options={treatmentOptions}
-              selectedValues={profile.treatmentPreferences}
-              onSelectionChange={(values) => handleProfileChange('treatmentPreferences', values)}
-              multiSelect={true}
-            />
-            
-            <TagSelector
-              label="Horarios preferidos para citas"
-              options={scheduleOptions}
-              selectedValues={profile.preferredSchedule}
-              onSelectionChange={(values) => handleProfileChange('preferredSchedule', values)}
-              multiSelect={true}
-            />
-            
-            <NotesInput
-              value={profile.notes || ''}
-              onChangeText={(text) => handleProfileChange('notes', text)}
-              maxLength={300}
-            />
-          </View>
-        </View>
-
-        {/* Clínica Preferida */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Clínica Preferida"
-            subtitle="Tu centro de estética principal"
-            icon="🏥"
-          />
-          
-          <View style={profileStyles.sectionContent}>
-            <ClinicSelector
-              currentClinic={selectedClinic}
-              onChangeClinic={handleChangeClinic}
-            />
-          </View>
-        </View>
-
         {/* Configuración de Notificaciones */}
         <View style={profileStyles.section}>
           <SectionHeader
@@ -278,6 +216,37 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </View>
         </View>
 
+        {/* Estadísticas del Perfil - MOVIDO AQUÍ */}
+        <View style={profileStyles.section}>
+          <SectionHeader
+            title="Tu Actividad"
+            subtitle="Resumen de tu experiencia"
+            icon="📊"
+          />
+          
+          <ProfileStatsCard
+            totalAppointments={user?.totalAppointments || 0}
+            beautyPoints={user?.beautyPoints || 0}
+            memberSince={user?.memberSince || new Date().toISOString()}
+            vipStatus={user?.vipStatus || false}
+          />
+        </View>
+
+        {/* Invitar Amigos - MOVIDO AQUÍ */}
+        <View style={profileStyles.section}>
+          <SectionHeader
+            title="Comparte y Gana"
+            subtitle="Invita amigos y obtén beneficios"
+            icon="🎁"
+          />
+          
+          <InviteFriendCard
+            userName={profile.firstName}
+            onInvite={() => console.log('Invitar amigo')}
+            referralCode={user?.referralCode || 'BEAUTY2024'}
+          />
+        </View>
+
         {/* Acciones de Cuenta */}
         <View style={profileStyles.section}>
           <SectionHeader
@@ -302,20 +271,10 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Espaciado final */}
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* Modal de selección de clínica */}
-      <ClinicSelectionModal
-        visible={clinicModalVisible}
-        onClose={() => setClinicModalVisible(false)}
-        selectedClinic={selectedClinic}
-        availableClinics={availableClinics}
-        onSelectClinic={handleSelectClinic}
-      />
     </SafeAreaView>
   );
-}; // ✅ ESTA LLAVE CIERRA LA FUNCIÓN
+};
 
-export default ProfileScreen; // ✅ EXPORT SIN LLAVE ADICIONAL
+export default ProfileScreen;

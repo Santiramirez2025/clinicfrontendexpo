@@ -20,7 +20,6 @@ import {
   VIPHeader,
   VIPStatusCard,
   BenefitsSection,
-  TestimonialsSection,
   PricingSection,
   LoadingOverlay,
 } from '../../components/VIP';
@@ -41,7 +40,6 @@ const VIPScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     subscribing,
     vipStatus,
     benefits,
-    testimonials,
     
     // Funciones
     handleSubscribe,
@@ -101,9 +99,6 @@ const VIPScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           isVIP={vipStatus?.isVIP || false}
           onBenefitPress={handleBenefitPress}
         />
-
-        {/* Testimonios */}
-        <TestimonialsSection testimonials={testimonials} />
 
         {/* Planes de suscripción */}
         <PricingSection

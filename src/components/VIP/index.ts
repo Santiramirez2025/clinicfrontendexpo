@@ -8,7 +8,6 @@
 export { VIPHeader } from './VIPHeader';
 export { VIPStatusCard } from './VIPStatusCard';
 export { BenefitCard } from './BenefitCard';
-export { TestimonialCard } from './TestimonialCard';
 export { PricingCard } from './PricingCard';
 export { LoadingOverlay } from './LoadingOverlay';
 
@@ -16,7 +15,6 @@ export { LoadingOverlay } from './LoadingOverlay';
 // 🏗️ SECCIONES COMPLETAS
 // ============================================================================
 export { BenefitsSection } from './BenefitsSection';
-export { TestimonialsSection } from './TestimonialsSection';
 export { PricingSection } from './PricingSection';
 
 // ============================================================================

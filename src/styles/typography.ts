@@ -483,3 +483,15 @@ export type LetterSpacing = keyof typeof premiumLetterSpacing;
 export type FontFamily = keyof typeof premiumFontFamily;
 export type TypographyStyle = keyof typeof premiumStyles;
 export type TypographyPreset = keyof typeof typography.presets;
+
+// src/styles/typography.ts - Agregar al final del archivo
+export const modernTypography = {
+  ...typography,
+  headingLarge: { fontSize: 28, fontWeight: '700' as const },
+  headingMedium: { fontSize: 24, fontWeight: '700' as const },
+  headingSmall: { fontSize: 20, fontWeight: '600' as const },
+  bodyLarge: { fontSize: 18, fontWeight: '400' as const },
+  bodyMedium: { fontSize: 16, fontWeight: '400' as const },
+  bodySmall: { fontSize: 14, fontWeight: '400' as const },
+  caption: { fontSize: 12, fontWeight: '400' as const },
+};

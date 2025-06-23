@@ -1,150 +1,271 @@
-// ============================================================================
-// components/dashboard/DashboardHeader.tsx - HEADER SIMPLIFICADO
-// ============================================================================
+// components/dashboard/DashboardHeader.tsx
 import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Platform,
+  StyleSheet,
+  Image,
   Animated,
-  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { dashboardStyles } from './styles';
-import type { DashboardHeaderProps } from './types';
+import { modernColors, modernSpacing, modernTypography } from '../../styles';
+
+interface DashboardHeaderProps {
+  userName: string;
+  isVIP: boolean;
+  profileImage?: string;
+  beautyPoints: number;
+  onProfilePress: () => void;
+  isDarkMode?: boolean;
+}
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  firstName,
-  vipStatus,
+  userName,
+  isVIP,
+  profileImage,
+  beautyPoints,
   onProfilePress,
+  isDarkMode = false,
 }) => {
-  
-  // Animaciones de entrada
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(-20)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const crownRotate = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Animación de entrada elegante
+    // Animación de entrada
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        easing: Easing.out(Easing.back(1.1)),
-        useNativeDriver: true,
-      }),
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 100,
-        friction: 8,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
 
-  const getInitials = (name: string) => {
-    const names = name.trim().split(' ');
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase();
+    // Animación de corona VIP
+    if (isVIP) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(crownRotate, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(crownRotate, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
     }
-    return name ? name.slice(0, 2).toUpperCase() : 'BC';
-  };
+  }, [isVIP]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
+    if (hour < 20) return 'Buenas tardes';
     return 'Buenas noches';
   };
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
-        dashboardStyles.headerContainer,
+        styles.container,
         {
           opacity: fadeAnim,
-          transform: [
-            { translateY: slideAnim },
-            { scale: scaleAnim }
-          ]
-        }
+          transform: [{ scale: scaleAnim }],
+        },
       ]}
     >
-      <BlurView intensity={95} tint="light" style={dashboardStyles.headerBlur}>
-        <LinearGradient
-          colors={[
-            'rgba(255, 248, 246, 0.95)',
-            'rgba(255, 253, 251, 0.90)',
-          ]}
-          locations={[0, 1]}
-          style={dashboardStyles.headerGradient}
-        >
-          {/* Elementos decorativos sutiles */}
-          <View style={dashboardStyles.decorativeCircle1} />
-          <View style={dashboardStyles.decorativeCircle2} />
-          
-          {/* Contenido principal */}
-          <View style={dashboardStyles.headerContent}>
-            <View style={dashboardStyles.headerTop}>
-              {/* Sección de bienvenida */}
-              <View style={dashboardStyles.welcomeContainer}>
-                <Text style={dashboardStyles.welcomeGreeting}>
-                  {getGreeting()}
-                </Text>
-                <Text style={dashboardStyles.welcomeText}>
-                  {firstName || 'Bella'}
-                </Text>
-                
-                {/* Badge VIP si aplica */}
-                {vipStatus && (
-                  <View style={dashboardStyles.vipBadgeContainer}>
-                    <LinearGradient
-                      colors={['#F7DC6F', '#F39C12', '#E67E22']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={dashboardStyles.vipBadgeHeader}
-                    >
-                      <Text style={dashboardStyles.vipBadgeHeaderText}>✨ VIP</Text>
-                    </LinearGradient>
-                    <View style={dashboardStyles.vipShimmer} />
-                  </View>
-                )}
-              </View>
-              
-              {/* Avatar del usuario */}
-              <TouchableOpacity 
-                style={dashboardStyles.avatarContainer}
-                onPress={onProfilePress}
-                activeOpacity={0.8}
+      <View style={styles.content}>
+        {/* Saludo y nombre */}
+        <View style={styles.greetingSection}>
+          <Text style={[styles.greeting, isDarkMode && styles.textDark]}>
+            {getGreeting()},
+          </Text>
+          <View style={styles.nameRow}>
+            <Text style={[styles.userName, isDarkMode && styles.textDark]}>
+              {userName}
+            </Text>
+            {isVIP && (
+              <Animated.View
+                style={[
+                  styles.vipBadge,
+                  {
+                    transform: [{
+                      rotate: crownRotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      }),
+                    }],
+                  },
+                ]}
               >
-                <LinearGradient
-                  colors={['#FF9A9E', '#FECFEF', '#FECFEF']}
-                  style={dashboardStyles.avatarGradient}
-                >
-                  <Text style={dashboardStyles.avatarText}>
-                    {getInitials(firstName || '')}
-                  </Text>
-                </LinearGradient>
-                <View style={dashboardStyles.avatarRing} />
-              </TouchableOpacity>
-            </View>
+                <Text style={styles.vipIcon}>👑</Text>
+              </Animated.View>
+            )}
           </View>
-        </LinearGradient>
-      </BlurView>
-      
-      {/* Fade inferior sutil */}
-      <LinearGradient
-        colors={['transparent', 'rgba(255, 248, 246, 0.2)']}
-        style={dashboardStyles.bottomFade}
-      />
+          
+          {/* Beauty Points */}
+          <View style={styles.pointsContainer}>
+            <Text style={styles.pointsIcon}>💎</Text>
+            <Text style={[styles.pointsText, isDarkMode && styles.textDark]}>
+              {beautyPoints.toLocaleString()} puntos
+            </Text>
+            {isVIP && (
+              <View style={styles.pointsMultiplier}>
+                <Text style={styles.multiplierText}>x2</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Perfil */}
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={onProfilePress}
+          activeOpacity={0.8}
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          ) : (
+            <LinearGradient
+              colors={isVIP 
+                ? [modernColors.vip, '#E8956B'] 
+                : [modernColors.primary, '#E8956B']
+              }
+              style={styles.profilePlaceholder}
+            >
+              <Text style={styles.profileInitial}>
+                {userName.charAt(0).toUpperCase()}
+              </Text>
+            </LinearGradient>
+          )}
+          
+          {/* Indicador de estado VIP */}
+          {isVIP && (
+            <View style={styles.vipIndicator}>
+              <LinearGradient
+                colors={[modernColors.vip, '#FFB800']}
+                style={styles.vipGradient}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: modernSpacing.lg,
+    paddingVertical: modernSpacing.md,
+  },
+  content: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  greetingSection: {
+    flex: 1,
+  },
+  greeting: {
+    ...modernTypography.bodyMedium,
+    color: modernColors.gray600,
+    marginBottom: modernSpacing.xs,
+  },
+  textDark: {
+    color: modernColors.gray300,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: modernSpacing.sm,
+  },
+  userName: {
+    ...modernTypography.headingLarge,
+    color: modernColors.gray900,
+    fontWeight: '700',
+  },
+  vipBadge: {
+    marginLeft: modernSpacing.sm,
+  },
+  vipIcon: {
+    fontSize: 24,
+  },
+  pointsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: modernColors.gray50,
+    paddingHorizontal: modernSpacing.sm,
+    paddingVertical: modernSpacing.xs,
+    borderRadius: modernSpacing.sm,
+    alignSelf: 'flex-start',
+  },
+  pointsIcon: {
+    fontSize: 14,
+    marginRight: modernSpacing.xs,
+  },
+  pointsText: {
+    ...modernTypography.bodySmall,
+    color: modernColors.gray700,
+    fontWeight: '600',
+  },
+  pointsMultiplier: {
+    marginLeft: modernSpacing.xs,
+    backgroundColor: modernColors.vip,
+    paddingHorizontal: modernSpacing.xs,
+    paddingVertical: 2,
+    borderRadius: modernSpacing.xs,
+  },
+  multiplierText: {
+    ...modernTypography.caption,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  profileButton: {
+    position: 'relative',
+  },
+  profileImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: modernColors.gray100,
+  },
+  profilePlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInitial: {
+    ...modernTypography.headingMedium,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  vipIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  vipGradient: {
+    flex: 1,
+  },
+});

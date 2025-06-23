@@ -1,11 +1,12 @@
 // ============================================================================
-// components/profile/index.ts - BARREL EXPORTS COMPLETOS
+// src/components/profile/index.ts - BARREL EXPORTS
 // ============================================================================
 
-// Componentes principales
-export { default as ProfileScreen } from '../../screens/ProfileScreen';
+// COMPONENTES PRINCIPALES
+// Descomenta cuando ProfileScreen esté en la ruta correcta
+// export { default as ProfileScreen } from '../../screens/profile/ProfileScreen';
 
-// Componentes básicos
+// COMPONENTES BÁSICOS (verificar que existan)
 export { SectionHeader } from './SectionHeader';
 export { InputField } from './InputField';
 export { TagSelector } from './TagSelector';
@@ -18,30 +19,17 @@ export { LegalCard } from './LegalCard';
 export { ActionButton } from './ActionButton';
 export { ClinicSelectionModal } from './ClinicSelectionModal';
 
-// Componentes nuevos con API
+// COMPONENTES CON API
 export { ProfileStatsCard } from './ProfileStatsCard';
 export { InviteFriendCard } from './InviteFriendCard';
 export { ChangePasswordCard } from './ChangePasswordCard';
-export { RecentActivityCard } from './RecentActivityCard';
 export { SkinTypeSelector } from './SkinTypeSelector';
 
-// Estilos y constantes
+// RecentActivityCard - TEMPORAL: comentado hasta verificar el tipo de export
+// export { default as RecentActivityCard } from './RecentActivityCard';
+// O si es export nombrado, usar:
+// export { RecentActivityCard } from './RecentActivityCard';
+
+// ESTILOS Y CONSTANTES
 export { profileStyles } from './styles';
 export { treatmentOptions, scheduleOptions } from './constants';
-
-// ============================================================================
-// hooks/index.ts - BARREL EXPORTS PARA HOOKS
-// ============================================================================
-
-// Hooks principales
-export { useProfile } from './useProfile';
-export { useClinicSelector } from './useClinicSelector';
-export { useProfileActions } from './useProfileActions';
-
-// Hooks nuevos
-export { useProfileStats } from './useProfileStats';
-export { useProfileHistory } from './useProfileHistory';
-
-// Tipos
-export type { UserProfile, NotificationSettings } from './useProfile';
-export type { Clinic } from './useClinicSelector';

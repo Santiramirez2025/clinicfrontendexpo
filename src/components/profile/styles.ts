@@ -1,12 +1,12 @@
 // ============================================================================
-// components/profile/styles.ts - ESTILOS DEL PROFILE SCREEN
+// components/profile/styles.ts - ESTILOS DEL PROFILE SCREEN CORREGIDOS ✅
 // ============================================================================
 import { StyleSheet, Dimensions } from 'react-native';
 import { 
   modernColors, 
   modernSpacing,
   modernTypography,
-  modernShadows as modernShadows
+  modernShadows
 } from '../../styles';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -210,6 +210,270 @@ export const profileStyles = StyleSheet.create({
     color: modernColors.errorModern,
     marginTop: 4,
     marginLeft: 4,
+  },
+
+  // ============================================================================
+  // ✅ ESTILOS PARA CHANGE PASSWORD CARD
+  // ============================================================================
+  passwordCard: {
+    backgroundColor: modernColors.surfaceElevated,
+    borderRadius: modernSpacing.componentModern.radiusLG,
+    padding: modernSpacing.aesthetic.cardSpacing,
+    marginBottom: modernSpacing.aesthetic.cardSpacing,
+    ...modernShadows.md,
+  },
+  
+  passwordHeader: {
+    marginBottom: modernSpacing.aesthetic.cardSpacing,
+  },
+  
+  passwordTitle: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    fontWeight: '700',
+    color: modernColors.charcoal,
+    marginBottom: 8,
+  },
+  
+  passwordSubtitle: {
+    fontSize: modernTypography.fontSizeModern.sm,
+    color: modernColors.gray600,
+    lineHeight: modernTypography.lineHeightModern.relaxed * modernTypography.fontSizeModern.sm,
+  },
+  
+  passwordForm: {
+    gap: modernSpacing.aesthetic.itemSpacing,
+  },
+  
+  passwordInput: {
+    backgroundColor: modernColors.gray50,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    paddingHorizontal: modernSpacing.aesthetic.itemSpacing,
+    paddingVertical: modernSpacing.aesthetic.itemSpacing,
+    fontSize: modernTypography.fontSizeModern.base,
+    color: modernColors.charcoal,
+    borderWidth: 1,
+    borderColor: modernColors.gray200,
+    minHeight: 48,
+  },
+  
+  passwordButton: {
+    backgroundColor: modernColors.accent,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    paddingVertical: modernSpacing.aesthetic.itemSpacing + 4,
+    paddingHorizontal: modernSpacing.aesthetic.cardSpacing,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...modernShadows.md,
+  },
+  
+  passwordButtonDisabled: {
+    opacity: 0.7,
+  },
+  
+  passwordButtonIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  
+  passwordButtonText: {
+    color: '#FFFFFF',
+    fontSize: modernTypography.fontSizeModern.base,
+    fontWeight: '600',
+  },
+  
+  showPasswordToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  
+  showPasswordText: {
+    fontSize: modernTypography.fontSizeModern.sm,
+    color: modernColors.gray600,
+    marginLeft: 8,
+  },
+
+  // ============================================================================
+  // ✅ ESTILOS PARA INVITE FRIEND CARD
+  // ============================================================================
+  inviteCard: {
+    backgroundColor: modernColors.surfaceElevated,
+    borderRadius: modernSpacing.componentModern.radiusLG,
+    padding: modernSpacing.aesthetic.cardSpacing,
+    marginBottom: modernSpacing.aesthetic.cardSpacing,
+    ...modernShadows.md,
+  },
+  
+  inviteHeader: {
+    marginBottom: modernSpacing.aesthetic.cardSpacing,
+  },
+  
+  inviteTitle: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    fontWeight: '700',
+    color: modernColors.charcoal,
+    marginBottom: 8,
+  },
+  
+  inviteSubtitle: {
+    fontSize: modernTypography.fontSizeModern.sm,
+    color: modernColors.gray600,
+    lineHeight: modernTypography.lineHeightModern.relaxed * modernTypography.fontSizeModern.sm,
+  },
+  
+  inviteForm: {
+    gap: modernSpacing.aesthetic.itemSpacing,
+  },
+  
+  inviteInput: {
+    backgroundColor: modernColors.gray50,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    paddingHorizontal: modernSpacing.aesthetic.itemSpacing,
+    paddingVertical: modernSpacing.aesthetic.itemSpacing,
+    fontSize: modernTypography.fontSizeModern.base,
+    color: modernColors.charcoal,
+    borderWidth: 1,
+    borderColor: modernColors.gray200,
+    minHeight: 48,
+  },
+  
+  inviteMessageInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  
+  inviteButton: {
+    backgroundColor: modernColors.accent,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    paddingVertical: modernSpacing.aesthetic.itemSpacing + 4,
+    paddingHorizontal: modernSpacing.aesthetic.cardSpacing,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...modernShadows.md,
+  },
+  
+  inviteButtonDisabled: {
+    opacity: 0.7,
+  },
+  
+  inviteButtonIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  
+  inviteButtonText: {
+    color: '#FFFFFF',
+    fontSize: modernTypography.fontSizeModern.base,
+    fontWeight: '600',
+  },
+
+  // ============================================================================
+  // ✅ ESTILOS PARA PROFILE STATS CARD
+  // ============================================================================
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  
+  statItem: {
+    backgroundColor: modernColors.gray50,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    padding: modernSpacing.aesthetic.itemSpacing,
+    alignItems: 'center',
+    width: '48%',
+    ...modernShadows.sm,
+  },
+  
+  statNumber: {
+    fontSize: modernTypography.fontSizeModern.xl,
+    fontWeight: '700',
+    color: modernColors.charcoal,
+    marginBottom: 4,
+  },
+  
+  statLabel: {
+    fontSize: modernTypography.fontSizeModern.xs,
+    color: modernColors.gray600,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  
+  vipStatusIndicator: {
+    backgroundColor: modernColors.vip + '15',
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    padding: 12,
+    marginTop: modernSpacing.aesthetic.itemSpacing,
+    alignItems: 'center',
+  },
+  
+  vipStatusText: {
+    fontSize: modernTypography.fontSizeModern.sm,
+    fontWeight: '600',
+    color: modernColors.vip,
+  },
+
+  // ============================================================================
+  // ✅ ESTILOS PARA SKIN TYPE SELECTOR
+  // ============================================================================
+  skinTypeContainer: {
+    marginBottom: modernSpacing.aesthetic.cardSpacing,
+  },
+  
+  skinTypeLabel: {
+    fontSize: modernTypography.fontSizeModern.base,
+    fontWeight: '600',
+    color: modernColors.charcoal,
+    marginBottom: modernSpacing.aesthetic.itemSpacing,
+  },
+  
+  skinTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  
+  skinTypeItem: {
+    backgroundColor: modernColors.gray50,
+    borderWidth: 2,
+    borderColor: modernColors.gray200,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    padding: modernSpacing.aesthetic.itemSpacing,
+    alignItems: 'center',
+    width: '30%',
+  },
+  
+  skinTypeItemSelected: {
+    borderColor: modernColors.accent,
+    backgroundColor: modernColors.accent + '10',
+  },
+  
+  skinTypeIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  
+  skinTypeItemLabel: {
+    fontSize: modernTypography.fontSizeModern.xs,
+    color: modernColors.gray600,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  
+  skinTypeItemLabelSelected: {
+    color: modernColors.accent,
+    fontWeight: '600',
+  },
+  
+  skinTypeDescription: {
+    fontSize: modernTypography.fontSizeModern.xs - 1,
+    color: modernColors.gray500,
+    textAlign: 'center',
+    marginTop: 4,
   },
 
   // ============================================================================
@@ -438,6 +702,30 @@ export const profileStyles = StyleSheet.create({
   },
 
   // ============================================================================
+  // ✅ OTROS ESTILOS FALTANTES
+  // ============================================================================
+  activitySeparator: {
+    height: 1,
+    backgroundColor: modernColors.gray200,
+    marginVertical: 8,
+  },
+  
+  loadMoreButton: {
+    backgroundColor: modernColors.gray50,
+    borderRadius: modernSpacing.componentModern.radiusMD,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: modernSpacing.aesthetic.itemSpacing,
+    ...modernShadows.sm,
+  },
+  
+  loadMoreText: {
+    fontSize: modernTypography.fontSizeModern.sm,
+    color: modernColors.gray600,
+    fontWeight: '500',
+  },
+
+  // ============================================================================
   // LEGAL CARD
   // ============================================================================
   legalCard: {
@@ -624,3 +912,6 @@ export const profileStyles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+// ✅ EXPORT AGREGADO
+export default profileStyles;

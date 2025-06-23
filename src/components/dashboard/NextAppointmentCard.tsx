@@ -1,36 +1,21 @@
-// ============================================================================
-// components/dashboard/NextAppointmentCard.tsx - PREMIUM SENSORIAL CORREGIDO ✨
-// ============================================================================
+// components/dashboard/NextAppointmentCard.tsx
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Animated,
-  Vibration,
   Platform,
-  Easing,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { 
-  dashboardStyles, 
-  appointmentCardStyles, 
-  premiumEffects 
-} from './styles';
-import { 
-  modernColors, 
-  modernAnimations, 
-  modernUtils,
-  modernSpacing 
-} from '../../styles'; // ✅ CORREGIDO: Path correcto
+import { modernColors, modernSpacing, modernTypography } from '../../styles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ============================================================================
-// 🎯 INTERFACES PREMIUM
-// ============================================================================
+// Interfaces
 export interface NextAppointment {
   id: string;
   treatment: string;
@@ -57,31 +42,20 @@ export interface NextAppointmentCardProps {
   userVipStatus?: boolean;
 }
 
-// ============================================================================
-// 🎨 CONFIGURACIONES PREMIUM
-// ============================================================================
+// Configuraciones de animación
 const ANIMATION_CONFIG = {
   entrance: {
     duration: 800,
-    easing: Easing.bezier(0.25, 0.46, 0.45, 0.94), // easeOutQuart
+    delay: 100,
   },
   interaction: {
     duration: 200,
-    easing: Easing.bezier(0.68, -0.55, 0.265, 1.55), // easeInOutBack
   },
   shimmer: {
     duration: 2500,
-    easing: Easing.bezier(0.4, 0.0, 0.6, 1.0), // easeInOutCubic
-  },
-  pulse: {
-    duration: 2000,
-    easing: Easing.bezier(0.445, 0.05, 0.55, 0.95), // easeInOutSine
   },
 };
 
-// ============================================================================
-// 🌟 COMPONENTE PRINCIPAL PREMIUM
-// ============================================================================
 export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
   appointment,
   onAppointmentPress,
@@ -92,274 +66,134 @@ export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
   isLoading = false,
   userVipStatus = false,
 }) => {
-  // ============================================================================
-  // 🎭 ESTADOS Y REFERENCIAS DE ANIMACIÓN
-  // ============================================================================
   const [isPressed, setIsPressed] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   
-  // Animaciones principales
+  // Animaciones
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  
-  // Efectos premium
+  const slideAnim = useRef(new Animated.Value(30)).current;
   const shimmerAnim = useRef(new Animated.Value(-SCREEN_WIDTH)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  const rippleAnim = useRef(new Animated.Value(0)).current;
-  
-  // Elementos decorativos
-  const floatingAnim1 = useRef(new Animated.Value(0)).current;
-  const floatingAnim2 = useRef(new Animated.Value(0)).current;
-  const floatingAnim3 = useRef(new Animated.Value(0)).current;
 
-  // ============================================================================
-  // 🎪 EFECTOS DE ENTRADA Y ANIMACIONES CONTINUAS
-  // ============================================================================
   useEffect(() => {
-    // Secuencia de entrada épica
-    const entranceSequence = Animated.sequence([
-      // Fase 1: Aparición suave
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: ANIMATION_CONFIG.entrance.duration,
-          easing: ANIMATION_CONFIG.entrance.easing,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          ...modernAnimations.easing.entrance,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: ANIMATION_CONFIG.entrance.duration,
-          easing: ANIMATION_CONFIG.entrance.easing,
-          useNativeDriver: true,
-        }),
-      ]),
-      
-      // Fase 2: Efecto de revelación
-      Animated.timing(rotateAnim, {
+    // Animación de entrada
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.cubic),
+        duration: ANIMATION_CONFIG.entrance.duration,
+        delay: ANIMATION_CONFIG.entrance.delay,
         useNativeDriver: true,
       }),
-    ]);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: ANIMATION_CONFIG.entrance.duration,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-    // Iniciar animación de entrada
-    entranceSequence.start(() => setIsReady(true));
-
-    // Shimmer continuo para efecto premium
-    const shimmerLoop = () => {
-      Animated.sequence([
+    // Shimmer continuo
+    if (!appointment) {
+      const shimmerLoop = () => {
+        shimmerAnim.setValue(-SCREEN_WIDTH);
         Animated.timing(shimmerAnim, {
-          toValue: SCREEN_WIDTH + 100,
+          toValue: SCREEN_WIDTH,
           duration: ANIMATION_CONFIG.shimmer.duration,
-          easing: ANIMATION_CONFIG.shimmer.easing,
           useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: -SCREEN_WIDTH,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        // Repetir con delay aleatorio para naturalidad
-        setTimeout(shimmerLoop, Math.random() * 3000 + 2000);
-      });
-    };
-    
-    const shimmerTimeout = setTimeout(shimmerLoop, 1000);
-
-    // Animaciones flotantes para elementos decorativos
-    const startFloatingAnimations = () => {
-      const createFloatingLoop = (animValue: Animated.Value, duration: number, delay: number) => {
-        const loop = () => {
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(animValue, {
-              toValue: 1,
-              duration: duration,
-              easing: Easing.inOut(Easing.sin), // ✅ CORREGIDO: sin en lugar de sine
-              useNativeDriver: true,
-            }),
-            Animated.timing(animValue, {
-              toValue: 0,
-              duration: duration,
-              easing: Easing.inOut(Easing.sin), // ✅ CORREGIDO: sin en lugar de sine
-              useNativeDriver: true,
-            }),
-          ]).start(() => loop());
-        };
-        loop();
+        }).start(() => setTimeout(shimmerLoop, 1000));
       };
+      shimmerLoop();
+    }
 
-      createFloatingLoop(floatingAnim1, 3000, 0);
-      createFloatingLoop(floatingAnim2, 4000, 1000);
-      createFloatingLoop(floatingAnim3, 5000, 2000);
-    };
-
-    const floatingTimeout = setTimeout(startFloatingAnimations, 500);
-
-    // Pulse para estados pendientes
+    // Pulse para estado pendiente
     if (appointment?.status === 'PENDING') {
       const pulseLoop = () => {
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.02,
-            duration: ANIMATION_CONFIG.pulse.duration,
-            easing: ANIMATION_CONFIG.pulse.easing,
+            duration: 1000,
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
-            duration: ANIMATION_CONFIG.pulse.duration,
-            easing: ANIMATION_CONFIG.pulse.easing,
+            duration: 1000,
             useNativeDriver: true,
           }),
         ]).start(() => pulseLoop());
       };
       pulseLoop();
     }
-
-    return () => {
-      clearTimeout(shimmerTimeout);
-      clearTimeout(floatingTimeout);
-    };
   }, [appointment]);
 
-  // ============================================================================
-  // 🤏 GESTIÓN DE INTERACCIONES PREMIUM
-  // ============================================================================
+  // Handlers de interacción
   const handlePressIn = () => {
     setIsPressed(true);
-    
-    // Animación de presión con spring premium
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.98,
-        ...modernAnimations.easing.interaction,
-        useNativeDriver: true,
-      }),
-      Animated.timing(glowAnim, {
-        toValue: 1,
-        duration: ANIMATION_CONFIG.interaction.duration,
-        useNativeDriver: true,
-      }),
-      // Efecto ripple
-      Animated.timing(rippleAnim, {
-        toValue: 1,
-        duration: 300,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Feedback háptico premium
-    if (Platform.OS === 'ios') {
-      Vibration.vibrate([0, 50, 50, 50]); // Patrón elegante
-    } else {
-      Vibration.vibrate(50);
-    }
+    Animated.timing(scaleAnim, {
+      toValue: 0.98,
+      duration: ANIMATION_CONFIG.interaction.duration,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePressOut = () => {
     setIsPressed(false);
-    
-    // Animación de liberación suave
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        ...modernAnimations.easing.gentle,
-        useNativeDriver: true,
-      }),
-      Animated.timing(glowAnim, {
-        toValue: 0,
-        duration: ANIMATION_CONFIG.interaction.duration * 1.5,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rippleAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
 
-  // ============================================================================
-  // 🎨 CONFIGURACIONES DE ESTILO DINÁMICO
-  // ============================================================================
+  // Configuración de estilos según estado
   const getStatusConfig = (status: NextAppointment['status']) => {
     const configs = {
       CONFIRMED: {
-        colors: ["#9FD8CB", "#E8F5F1"],
+        colors: ['#E8F5F1', '#D4EDE4'],
         statusColor: modernColors.success,
         icon: '✓',
         text: 'Confirmada',
-        glowColor: modernColors.success + '30',
-        borderColor: modernColors.success,
       },
       PENDING: {
-        colors: ['#FFE5CC', '#FFD6AA', '#FFC688'], // ✅ CORREGIDO: Array directo
+        colors: ['#FFF5E6', '#FFE5CC'],
         statusColor: modernColors.warning,
         icon: '⏳',
         text: 'Pendiente',
-        glowColor: modernColors.warning + '30',
-        borderColor: modernColors.warning,
       },
       COMPLETED: {
-        colors: ['#FFFFFF', '#FEF7F0', '#F5F5F4'], // ✅ CORREGIDO: Array directo
+        colors: ['#F5F5F5', '#EEEEEE'],
         statusColor: modernColors.gray600,
-        icon: '🎉',
+        icon: '✓',
         text: 'Completada',
-        glowColor: modernColors.gray200 + '30',
-        borderColor: modernColors.gray400,
       },
     };
-    
     return configs[status] || configs.PENDING;
   };
 
   const getTreatmentIcon = (treatment: string, category?: string) => {
-    if (category) {
-      const categoryIcons: { [key: string]: string } = { // ✅ CORREGIDO: Tipo explícito
-        facial: '✨',
-        corporal: '🌸',
-        masaje: '💆‍♀️',
-        depilacion: '🌺',
-        manicure: '💅',
-        pedicure: '🦶',
-        estetica: '💎',
-        relajacion: '🧘‍♀️',
-      };
-      return categoryIcons[category.toLowerCase()] || '🌟';
-    }
-
-    // Fallback basado en nombre del tratamiento
-    const treatmentLower = treatment.toLowerCase();
-    if (treatmentLower.includes('facial')) return '✨';
-    if (treatmentLower.includes('masaje')) return '💆‍♀️';
-    if (treatmentLower.includes('depilación')) return '🌸';
-    if (treatmentLower.includes('manicure')) return '💅';
-    if (treatmentLower.includes('pedicure')) return '🦶';
-    if (treatmentLower.includes('peeling')) return '🌟';
-    if (treatmentLower.includes('hidratación')) return '💧';
-    return '🌺';
+    const icons: { [key: string]: string } = {
+      facial: '✨',
+      corporal: '🌸',
+      masaje: '💆‍♀️',
+      depilacion: '🌺',
+      manicure: '💅',
+      pedicure: '🦶',
+      default: '🌟',
+    };
+    return icons[category?.toLowerCase() || 'default'];
   };
 
-  // ============================================================================
-  // 🕳️ ESTADO VACÍO PREMIUM
-  // ============================================================================
+  // Estado vacío (sin cita)
   if (!appointment) {
     return (
       <Animated.View
         style={[
-          appointmentCardStyles.appointmentCardContainer,
+          styles.container,
           {
             opacity: fadeAnim,
             transform: [
@@ -370,162 +204,59 @@ export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
         ]}
       >
         <TouchableOpacity
-          style={appointmentCardStyles.appointmentCard}
+          style={styles.card}
           onPress={onAppointmentPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={1}
-          accessible={true}
-          accessibilityLabel="Agendar nueva cita"
-          accessibilityHint="Toca para abrir el calendario de citas"
         >
           <LinearGradient
-            colors={['#FFFFFF', '#FEF7F0', '#F5F5F4']} // ✅ CORREGIDO: Array directo
-            style={appointmentCardStyles.appointmentCardGradient}
+            colors={['#FFFFFF', '#FEF7F0']}
+            style={styles.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            {/* Elementos decorativos flotantes */}
+            {/* Shimmer effect */}
             <Animated.View
               style={[
+                styles.shimmer,
                 {
-                  position: 'absolute',
-                  top: 20,
-                  right: 30,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: modernColors.primary + '40', // ✅ CORREGIDO
+                  transform: [{ translateX: shimmerAnim }],
                 },
-                {
-                  transform: [{
-                    translateY: floatingAnim1.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -8],
-                    })
-                  }],
-                  opacity: floatingAnim1.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.3, 0.6],
-                  }),
-                }
               ]}
             />
             
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  bottom: 30,
-                  left: 40,
-                  width: 6,
-                  height: 6,
-                  borderRadius: 3,
-                  backgroundColor: modernColors.vip + '40', // ✅ CORREGIDO
-                },
-                {
-                  transform: [{
-                    translateY: floatingAnim2.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 6],
-                    })
-                  }],
-                  opacity: floatingAnim2.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.2, 0.5],
-                  }),
-                }
-              ]}
-            />
-
-            {/* Shimmer effect premium */}
-            <Animated.View
-              style={[
-                premiumEffects.shimmerBase,
-                {
-                  transform: [{
-                    translateX: shimmerAnim
-                  }],
-                  opacity: 0.6,
-                }
-              ]}
-            />
-            
-            {/* Contenido del estado vacío */}
-            <View style={appointmentCardStyles.noAppointmentContainer}>
-              <View style={appointmentCardStyles.emptyStateIconContainer}>
+            <View style={styles.emptyStateContainer}>
+              <View style={styles.emptyIconContainer}>
                 <LinearGradient
-                  colors={[modernColors.vip, '#E8956B', '#D6845A']} // ✅ CORREGIDO: Array directo
-                  style={appointmentCardStyles.emptyStateIconBg}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  colors={[modernColors.primary, '#E8956B']}
+                  style={styles.emptyIconGradient}
                 >
-                  <Text style={appointmentCardStyles.emptyStateIcon}>📅</Text>
+                  <Text style={styles.emptyIcon}>📅</Text>
                 </LinearGradient>
-                
-                {/* Anillo de pulso */}
-                <Animated.View
-                  style={[
-                    appointmentCardStyles.iconRipple,
-                    {
-                      transform: [{
-                        scale: floatingAnim1.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 1.1],
-                        })
-                      }],
-                      opacity: floatingAnim1.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.3, 0.1],
-                      }),
-                    }
-                  ]}
-                />
               </View>
               
-              <View style={appointmentCardStyles.emptyStateContent}>
-                <Text style={appointmentCardStyles.emptyStateTitle}>
-                  Tu calendario está libre
-                </Text>
-                <Text style={appointmentCardStyles.emptyStateSubtitle}>
-                  Es el momento perfecto para agendar tu próximo ritual de belleza y bienestar
-                </Text>
-                
-                <View style={appointmentCardStyles.ctaContainer}>
-                  <TouchableOpacity
-                    onPress={onAppointmentPress}
-                    activeOpacity={0.8}
-                    accessible={true}
-                    accessibilityLabel="Agendar ahora"
-                  >
-                    <LinearGradient
-                      colors={[modernColors.vip, '#E8956B', '#D6845A']} // ✅ CORREGIDO: Array directo
-                      style={appointmentCardStyles.ctaButton}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                    >
-                      <Text style={appointmentCardStyles.ctaText}>Agendar ahora</Text>
-                      <Text style={appointmentCardStyles.ctaIcon}>→</Text>
-                      
-                      {/* Efecto de brillo en hover */}
-                      <Animated.View
-                        style={[
-                          premiumEffects.shimmerBase,
-                          {
-                            transform: [{
-                              translateX: shimmerAnim.interpolate({
-                                inputRange: [-SCREEN_WIDTH, SCREEN_WIDTH],
-                                outputRange: [-100, 100],
-                              })
-                            }],
-                            opacity: 0.3,
-                          }
-                        ]}
-                      />
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <Text style={styles.emptyTitle}>
+                No tienes citas próximas
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                Agenda tu próxima sesión de belleza
+              </Text>
+              
+              <TouchableOpacity
+                style={styles.ctaButton}
+                onPress={onAppointmentPress}
+              >
+                <LinearGradient
+                  colors={[modernColors.primary, '#E8956B']}
+                  style={styles.ctaGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.ctaText}>Agendar ahora</Text>
+                  <Text style={styles.ctaIcon}>→</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -533,290 +264,93 @@ export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
     );
   }
 
-  // ============================================================================
-  // 💎 RENDERIZADO CON CITA - ESTADO PREMIUM
-  // ============================================================================
+  // Con cita
   const statusConfig = getStatusConfig(appointment.status);
   const treatmentIcon = getTreatmentIcon(appointment.treatment, appointment.category);
 
   return (
     <Animated.View
       style={[
-        appointmentCardStyles.appointmentCardContainer,
+        styles.container,
         {
           opacity: fadeAnim,
           transform: [
             { scale: Animated.multiply(scaleAnim, pulseAnim) },
             { translateY: slideAnim },
-            { 
-              rotateX: rotateAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['45deg', '0deg'],
-              })
-            },
           ],
         }
       ]}
     >
-      {/* Glow effect para interacciones */}
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: -4,
-            left: -4,
-            right: -4,
-            bottom: -4,
-            borderRadius: 28, // ✅ CORREGIDO: Valor directo
-            backgroundColor: statusConfig.glowColor,
-            opacity: glowAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.3],
-            }),
-          }
-        ]}
-      />
-
       <TouchableOpacity
-        style={appointmentCardStyles.appointmentCard}
+        style={styles.card}
         onPress={onDetailsPress || onAppointmentPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={1}
-        accessible={true}
-        accessibilityLabel={`Cita de ${appointment.treatment} el ${formatAppointmentDate(appointment.date)} a las ${formatAppointmentTime(appointment.time)}`}
-        accessibilityHint="Toca para ver detalles de la cita"
       >
         <LinearGradient
           colors={statusConfig.colors}
-          style={appointmentCardStyles.appointmentCardGradient}
+          style={styles.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          {/* Elementos decorativos con movimiento */}
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 20,
-                right: 30,
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: statusConfig.statusColor + '40',
-              },
-              {
-                transform: [{
-                  translateY: floatingAnim1.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, -6],
-                  })
-                }],
-              }
-            ]}
-          />
-          
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                bottom: 30,
-                left: 40,
-                width: 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: statusConfig.statusColor + '25',
-              },
-              {
-                transform: [{
-                  translateY: floatingAnim2.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 4],
-                  })
-                }],
-              }
-            ]}
-          />
-
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 60,
-                left: 20,
-                width: 4,
-                height: 4,
-                borderRadius: 2,
-                backgroundColor: statusConfig.statusColor + '15',
-              },
-              {
-                transform: [{
-                  translateY: floatingAnim3.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, -3],
-                  })
-                }],
-              }
-            ]}
-          />
-
-          {/* Shimmer effect */}
-          <Animated.View
-            style={[
-              premiumEffects.shimmerBase,
-              {
-                transform: [{ translateX: shimmerAnim }],
-                opacity: 0.4,
-              }
-            ]}
-          />
-
-          {/* Ripple effect en interacciones */}
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: rippleAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 200],
-                }),
-                height: rippleAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, 200],
-                }),
-                borderRadius: 100,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                transform: [
-                  { translateX: -100 },
-                  { translateY: -100 },
-                ],
-                opacity: rippleAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.6, 0],
-                }),
-              }
-            ]}
-          />
-
-          {/* Header con tiempo y estado */}
-          <View style={appointmentCardStyles.appointmentHeader}>
-            <View style={appointmentCardStyles.timeContainer}>
-              <Text style={appointmentCardStyles.timeLabel}>Próxima cita</Text>
-              <View style={appointmentCardStyles.dateTimeRow}>
-                <Text style={appointmentCardStyles.dateText}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.dateTimeContainer}>
+              <Text style={styles.dateLabel}>Próxima cita</Text>
+              <View style={styles.dateTimeRow}>
+                <Text style={styles.date}>
                   {formatAppointmentDate(appointment.date)}
                 </Text>
-                <View style={appointmentCardStyles.timeDivider} />
-                <Text style={appointmentCardStyles.timeText}>
+                <View style={styles.timeDot} />
+                <Text style={styles.time}>
                   {formatAppointmentTime(appointment.time)}
                 </Text>
               </View>
             </View>
             
-            <View style={appointmentCardStyles.statusContainer}>
-              <LinearGradient
-                colors={[statusConfig.statusColor + '20', statusConfig.statusColor + '10']}
-                style={[
-                  appointmentCardStyles.statusBadge,
-                  { 
-                    borderColor: statusConfig.borderColor + '30',
-                    borderWidth: 1,
-                  }
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={appointmentCardStyles.statusIcon}>{statusConfig.icon}</Text>
-                <Text style={[
-                  appointmentCardStyles.statusText, 
-                  { color: statusConfig.statusColor }
-                ]}>
-                  {statusConfig.text}
-                </Text>
-              </LinearGradient>
+            <View style={[styles.statusBadge, { backgroundColor: statusConfig.statusColor + '20' }]}>
+              <Text style={styles.statusIcon}>{statusConfig.icon}</Text>
+              <Text style={[styles.statusText, { color: statusConfig.statusColor }]}>
+                {statusConfig.text}
+              </Text>
             </View>
           </View>
 
-          {/* Contenido principal del tratamiento */}
-          <View style={appointmentCardStyles.appointmentContent}>
-            <View style={appointmentCardStyles.treatmentRow}>
-              <View style={appointmentCardStyles.treatmentIconContainer}>
+          {/* Contenido */}
+          <View style={styles.content}>
+            <View style={styles.treatmentRow}>
+              <View style={styles.iconContainer}>
                 <LinearGradient
-                  colors={[modernColors.vip, '#E8956B', '#D6845A']} // ✅ CORREGIDO: Array directo
-                  style={appointmentCardStyles.treatmentIconBg}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  colors={[modernColors.primary, '#E8956B']}
+                  style={styles.iconGradient}
                 >
-                  <Text style={appointmentCardStyles.treatmentIcon}>{treatmentIcon}</Text>
-                  
-                  {/* Indicator VIP si aplica */}
-                  {appointment.isVipExclusive && (
-                    <View style={{
-                      position: 'absolute',
-                      top: -4,
-                      right: -4,
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: modernColors.vip,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                      <Text style={{ fontSize: 8, color: '#FFF' }}>👑</Text>
-                    </View>
-                  )}
+                  <Text style={styles.treatmentIcon}>{treatmentIcon}</Text>
                 </LinearGradient>
               </View>
               
-              <View style={appointmentCardStyles.treatmentInfo}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: modernSpacing.sm }}>
-                  <Text style={appointmentCardStyles.treatmentTitle}>
-                    {appointment.treatment}
-                  </Text>
-                  {userVipStatus && (
-                    <View style={{
-                      marginLeft: modernSpacing.sm,
-                      paddingHorizontal: modernSpacing.xs,
-                      paddingVertical: 2,
-                      backgroundColor: modernColors.vip + '20',
-                      borderRadius: modernSpacing.xs,
-                    }}>
-                      <Text style={{
-                        fontSize: 10,
-                        color: modernColors.vip,
-                        fontWeight: '600',
-                      }}>-25%</Text>
-                    </View>
-                  )}
-                </View>
-                
-                <View style={appointmentCardStyles.professionalRow}>
-                  <Text style={appointmentCardStyles.withText}>con</Text>
-                  <Text style={appointmentCardStyles.professionalName}>
+              <View style={styles.treatmentInfo}>
+                <Text style={styles.treatmentName}>
+                  {appointment.treatment}
+                </Text>
+                <View style={styles.professionalRow}>
+                  <Text style={styles.withText}>con</Text>
+                  <Text style={styles.professionalName}>
                     {appointment.professional}
                   </Text>
                 </View>
-                
-                {(appointment.duration || appointment.beautyPointsEarned) && (
-                  <View style={appointmentCardStyles.durationRow}>
-                    {appointment.duration && (
-                      <>
-                        <Text style={appointmentCardStyles.durationIcon}>⏱</Text>
-                        <Text style={appointmentCardStyles.durationText}>
-                          {appointment.duration} min
-                        </Text>
-                      </>
-                    )}
-                    
+                {appointment.duration && (
+                  <View style={styles.durationRow}>
+                    <Text style={styles.durationIcon}>⏱</Text>
+                    <Text style={styles.durationText}>
+                      {appointment.duration} minutos
+                    </Text>
                     {appointment.beautyPointsEarned && (
                       <>
-                        {appointment.duration && <View style={appointmentCardStyles.pointsDivider} />}
-                        <Text style={appointmentCardStyles.pointsIcon}>💎</Text>
-                        <Text style={appointmentCardStyles.pointsText}>
+                        <Text style={styles.pointsDivider}>•</Text>
+                        <Text style={styles.pointsIcon}>💎</Text>
+                        <Text style={styles.pointsText}>
                           +{appointment.beautyPointsEarned} pts
-                          {userVipStatus && ' (x2)'}
                         </Text>
                       </>
                     )}
@@ -826,50 +360,26 @@ export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
             </View>
           </View>
 
-          {/* Footer con acciones premium */}
-          <View style={appointmentCardStyles.appointmentFooter}>
+          {/* Footer con acciones */}
+          <View style={styles.footer}>
             <TouchableOpacity 
-              style={appointmentCardStyles.secondaryAction}
-              onPress={onModifyPress || onAppointmentPress}
-              accessible={true}
-              accessibilityLabel="Modificar cita"
+              style={styles.secondaryButton}
+              onPress={onModifyPress}
             >
-              <Text style={appointmentCardStyles.secondaryActionText}>Modificar</Text>
+              <Text style={styles.secondaryButtonText}>Modificar</Text>
             </TouchableOpacity>
             
-            <View style={appointmentCardStyles.actionDivider} />
-            
             <TouchableOpacity 
-              style={appointmentCardStyles.primaryAction}
+              style={styles.primaryButton}
               onPress={onDetailsPress || onAppointmentPress}
-              accessible={true}
-              accessibilityLabel="Ver detalles completos"
             >
               <LinearGradient
-                colors={[modernColors.vip, '#E8956B', '#D6845A']} // ✅ CORREGIDO: Array directo
-                style={appointmentCardStyles.primaryActionBg}
+                colors={[modernColors.primary, '#E8956B']}
+                style={styles.primaryButtonGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={appointmentCardStyles.primaryActionText}>Ver detalles</Text>
-                <Text style={appointmentCardStyles.primaryActionIcon}>→</Text>
-                
-                {/* Shine effect en hover */}
-                <Animated.View
-                  style={[
-                    premiumEffects.shimmerBase,
-                    {
-                      width: 60,
-                      transform: [{
-                        translateX: shimmerAnim.interpolate({
-                          inputRange: [-SCREEN_WIDTH, SCREEN_WIDTH],
-                          outputRange: [-30, 30],
-                        })
-                      }],
-                      opacity: 0.4,
-                    }
-                  ]}
-                />
+                <Text style={styles.primaryButtonText}>Ver detalles</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -879,7 +389,235 @@ export const NextAppointmentCard: React.FC<NextAppointmentCardProps> = ({
   );
 };
 
-// ============================================================================
-// 🎯 EXPORT LIMPIO SIN defaultProps (deprecado en React 18)
-// ============================================================================
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: modernSpacing.md,
+  },
+  card: {
+    borderRadius: modernSpacing.lg,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  gradient: {
+    padding: modernSpacing.lg,
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    transform: [{ skewX: '-20deg' }],
+  },
+  // Estado vacío
+  emptyStateContainer: {
+    alignItems: 'center',
+    paddingVertical: modernSpacing.xl,
+  },
+  emptyIconContainer: {
+    marginBottom: modernSpacing.lg,
+  },
+  emptyIconGradient: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyIcon: {
+    fontSize: 40,
+  },
+  emptyTitle: {
+    ...modernTypography.headingSmall,
+    color: modernColors.gray900,
+    fontWeight: '700',
+    marginBottom: modernSpacing.sm,
+  },
+  emptySubtitle: {
+    ...modernTypography.bodyMedium,
+    color: modernColors.gray600,
+    marginBottom: modernSpacing.xl,
+  },
+  ctaButton: {
+    borderRadius: modernSpacing.md,
+    overflow: 'hidden',
+  },
+  ctaGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: modernSpacing.lg,
+    paddingVertical: modernSpacing.md,
+    gap: modernSpacing.sm,
+  },
+  ctaText: {
+    ...modernTypography.bodyMedium,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  ctaIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  // Con cita
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: modernSpacing.lg,
+  },
+  dateTimeContainer: {
+    flex: 1,
+  },
+  dateLabel: {
+    ...modernTypography.caption,
+    color: modernColors.gray600,
+    marginBottom: modernSpacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  date: {
+    ...modernTypography.bodyMedium,
+    color: modernColors.gray900,
+    fontWeight: '600',
+  },
+  timeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: modernColors.gray400,
+    marginHorizontal: modernSpacing.sm,
+  },
+  time: {
+    ...modernTypography.bodyLarge,
+    color: modernColors.gray900,
+    fontWeight: '700',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: modernSpacing.sm,
+    paddingVertical: modernSpacing.xs,
+    borderRadius: modernSpacing.sm,
+    gap: modernSpacing.xs,
+  },
+  statusIcon: {
+    fontSize: 12,
+  },
+  statusText: {
+    ...modernTypography.caption,
+    fontWeight: '600',
+  },
+  content: {
+    marginBottom: modernSpacing.lg,
+  },
+  treatmentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  iconContainer: {
+    marginRight: modernSpacing.md,
+  },
+  iconGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  treatmentIcon: {
+    fontSize: 24,
+  },
+  treatmentInfo: {
+    flex: 1,
+  },
+  treatmentName: {
+    ...modernTypography.bodyLarge,
+    color: modernColors.gray900,
+    fontWeight: '700',
+    marginBottom: modernSpacing.xs,
+  },
+  professionalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: modernSpacing.xs,
+  },
+  withText: {
+    ...modernTypography.bodySmall,
+    color: modernColors.gray500,
+    marginRight: modernSpacing.xs,
+  },
+  professionalName: {
+    ...modernTypography.bodyMedium,
+    color: modernColors.gray700,
+    fontWeight: '600',
+  },
+  durationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  durationIcon: {
+    fontSize: 12,
+    marginRight: modernSpacing.xs,
+  },
+  durationText: {
+    ...modernTypography.caption,
+    color: modernColors.gray600,
+  },
+  pointsDivider: {
+    marginHorizontal: modernSpacing.sm,
+    color: modernColors.gray400,
+  },
+  pointsIcon: {
+    fontSize: 12,
+    marginRight: modernSpacing.xs,
+  },
+  pointsText: {
+    ...modernTypography.caption,
+    color: modernColors.primary,
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: modernSpacing.sm,
+    paddingTop: modernSpacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  secondaryButton: {
+    flex: 1,
+    paddingVertical: modernSpacing.sm,
+    alignItems: 'center',
+    borderRadius: modernSpacing.sm,
+    borderWidth: 1,
+    borderColor: modernColors.gray300,
+  },
+  secondaryButtonText: {
+    ...modernTypography.bodySmall,
+    color: modernColors.gray700,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    flex: 1,
+    borderRadius: modernSpacing.sm,
+    overflow: 'hidden',
+  },
+  primaryButtonGradient: {
+    paddingVertical: modernSpacing.sm,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    ...modernTypography.bodySmall,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+});
+
 export default NextAppointmentCard;

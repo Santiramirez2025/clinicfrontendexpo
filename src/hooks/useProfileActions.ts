@@ -1,101 +1,69 @@
 // ============================================================================
-// hooks/useProfileActions.ts - HOOK PARA ACCIONES DE CUENTA (CORREGIDO)
+// src/components/profile/useProfileActions.ts - HOOK BÁSICO
 // ============================================================================
-import { Alert, Linking } from 'react-native';
-import { useDispatch } from 'react-redux';
+import { useState } from 'react';
 
-// Mock de logout action (ajustar según tu slice real)
-const logout = () => ({ type: 'LOGOUT' });
+export interface ProfileActions {
+  handleChangePassword: (oldPassword: string, newPassword: string) => Promise<void>;
+  handleInviteFriend: (email: string, message: string) => Promise<void>;
+  handleLogout: () => void;
+  handleDeleteAccount: () => void;
+  handleOpenPrivacyPolicy: () => void;
+  loading: boolean;
+}
 
-// Mock de authAPI (reemplazar por tu API real)
-const authAPI = {
-  logout: async () => ({ success: true })
-};
+export const useProfileActions = (): ProfileActions => {
+  const [loading, setLoading] = useState(false);
 
-export const useProfileActions = () => {
-  const dispatch = useDispatch();
+  const handleChangePassword = async (oldPassword: string, newPassword: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implementar API call
+      console.log('Changing password...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInviteFriend = async (email: string, message: string) => {
+    setLoading(true);
+    try {
+      // TODO: Implementar API call
+      console.log('Sending invitation to:', email, message);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás segura de que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Cerrar Sesión', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await authAPI.logout();
-              dispatch(logout());
-            } catch (error) {
-              console.error('Logout error:', error);
-              // Hacer logout local aunque falle el servidor
-              dispatch(logout());
-            }
-          }
-        }
-      ]
-    );
+    console.log('Logging out...');
+    // TODO: Implementar logout
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      '⚠️ Eliminar Cuenta',
-      'Esta acción eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Confirmación Final',
-              'Escribe "ELIMINAR" para confirmar que deseas eliminar tu cuenta',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                { 
-                  text: 'Proceder', 
-                  style: 'destructive',
-                  onPress: () => {
-                    // En implementación real, llamar a API de eliminación
-                    Alert.alert('Función no disponible', 'Contacta con soporte para eliminar tu cuenta');
-                  }
-                }
-              ]
-            );
-          }
-        }
-      ]
-    );
+    console.log('Deleting account...');
+    // TODO: Implementar delete account
   };
 
   const handleOpenPrivacyPolicy = () => {
-    Alert.alert(
-      'Política de Privacidad',
-      '¿Cómo deseas acceder a nuestra política de privacidad?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Abrir en navegador', 
-          onPress: () => {
-            // En implementación real, abrir URL real
-            Linking.openURL('https://bellezaestetica.com/privacy');
-          }
-        },
-        { 
-          text: 'Enviar por email', 
-          onPress: () => {
-            Alert.alert('📧 Enviado', 'Te hemos enviado la política de privacidad a tu email');
-          }
-        }
-      ]
-    );
+    console.log('Opening privacy policy...');
+    // TODO: Implementar privacy policy
   };
 
   return {
+    handleChangePassword,
+    handleInviteFriend,
     handleLogout,
     handleDeleteAccount,
-    handleOpenPrivacyPolicy
+    handleOpenPrivacyPolicy,
+    loading,
   };
 };

@@ -1,7 +1,7 @@
 // ============================================================================
 // hooks/useAuth.ts - HOOK DE AUTENTICACIÓN OPTIMIZADO
 // ============================================================================
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { setUser, setToken } from '../store/slices/authSlice';
@@ -73,7 +73,7 @@ interface UseAuthReturn extends AuthState {
   validateEmail: (email: string) => string | null;
   validatePassword: (password: string) => string | null;
   
-  // Estados calculados
+  // Estados calculados - SIEMPRE boolean
   isFormValid: boolean;
   canSubmit: boolean;
 }
@@ -230,12 +230,12 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   // ============================================================================
   const createUserPayload = useCallback((userData: any): AuthUser => {
     return {
-      id: userData.id,
+      id: userData.id || '',
       name: `${userData.firstName} ${userData.lastName}`,
       email: userData.email,
       firstName: userData.firstName,
       lastName: userData.lastName,
-      role: 'patient',
+      role: userData.role || 'patient',
       isDemo: false,
       vipStatus: userData.vipStatus || false,
       beautyPoints: userData.beautyPoints || 20,
@@ -375,24 +375,26 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   ]);
 
   // ============================================================================
-  // ESTADOS CALCULADOS
+  // ESTADOS CALCULADOS - USANDO useMemo PARA GARANTIZAR BOOLEAN
   // ============================================================================
-  const isFormValid = useCallback(() => {
-    const hasRequiredFields = formData.email.trim() && 
-      (type === 'forgot' || formData.password.trim());
+  const isFormValid = useMemo(() => {
+    const hasRequiredFields = formData.email.trim() !== '' && 
+      (type === 'forgot' || formData.password.trim() !== '');
     
     if (type === 'register') {
       return hasRequiredFields && 
-        formData.firstName?.trim() && 
-        formData.lastName?.trim() && 
-        formData.phone?.trim() &&
+        !!formData.firstName?.trim() && 
+        !!formData.lastName?.trim() && 
+        !!formData.phone?.trim() &&
         formData.password === formData.confirmPassword;
     }
     
     return hasRequiredFields;
-  }, [formData, type])();
+  }, [formData, type]);
 
-  const canSubmit = isFormValid && !loading && connectionStatus === 'connected';
+  const canSubmit = useMemo(() => {
+    return isFormValid && !loading && connectionStatus === 'connected';
+  }, [isFormValid, loading, connectionStatus]);
 
   // ============================================================================
   // EFFECTS
@@ -426,7 +428,7 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
     validateEmail,
     validatePassword,
     
-    // Estados calculados
+    // Estados calculados - GARANTIZADOS COMO BOOLEAN
     isFormValid,
     canSubmit,
   };

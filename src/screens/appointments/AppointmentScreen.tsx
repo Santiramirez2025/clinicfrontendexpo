@@ -1,117 +1,183 @@
-// ============================================================================
-// screens/AppointmentScreen.tsx - SCREEN PRINCIPAL LISTO PARA USAR
-// ============================================================================
-import React from 'react';
-import { View, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-
-// Importar sistema de estilos
-import { modernColors } from '../../styles';
-
-// Importar custom hook
-import { useAppointments } from '../../hooks/useAppointments';
-
-// Importar componentes modularizados
+// screens/appointments/AppointmentsScreen.tsx
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  LoadingScreen,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { 
   AppointmentHeader,
   AppointmentTabs,
-  AppointmentList,
-  AppointmentDetailModal,
-  appointmentStyles
-} from '../../components/appointmentscreen';
+  AppointmentCard,
+  AppointmentFAB,
+  EmptyState,
+} from '../../components/appointments';
+import { useAppointments } from '../../hooks/useAppointments';
+import { modernColors, modernSpacing } from '../../styles';
+import { Appointment, AppointmentTab } from '../../../types/appointment';
 
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
-const AppointmentScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const user = useSelector((state: RootState) => state.auth.user);
-
-  // Custom hook con toda la lógica
+export const AppointmentsScreen: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<AppointmentTab>('upcoming');
+  const [refreshing, setRefreshing] = useState(false);
+  
   const {
-    // Estados
     appointments,
     loading,
-    refreshing,
-    activeTab,
-    selectedAppointment,
-    detailsModalVisible,
-    sections,
-    currentSection,
-
-    // Setters
-    setActiveTab,
-    setDetailsModalVisible,
-
-    // Funciones
-    loadAppointments,
-    onRefresh,
-    handleRescheduleAppointment,
-    handleCancelAppointment,
-    handleWhatsAppReminder,
-    handleAppointmentPress,
+    error,
+    fetchAppointments,
+    cancelAppointment,
+    rescheduleAppointment,
   } = useAppointments();
 
-  // ============================================================================
-  // HANDLERS ESPECÍFICOS DE NAVEGACIÓN
-  // ============================================================================
-  const handleBookAppointment = () => {
-    navigation.navigate('BookAppointment');
-  };
+  // Filtrar appointments según la pestaña activa
+  const filteredAppointments = useMemo(() => {
+    if (!appointments) return [];
+    
+    const now = new Date();
+    
+    if (activeTab === 'upcoming') {
+      return appointments.filter(apt => {
+        const aptDate = new Date(apt.date);
+        return aptDate >= now && apt.status !== 'CANCELLED';
+      }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    } else {
+      return appointments.filter(apt => {
+        const aptDate = new Date(apt.date);
+        return aptDate < now || apt.status === 'CANCELLED';
+      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+  }, [appointments, activeTab]);
 
-  const handleReschedule = (appointment: any) => {
-    handleRescheduleAppointment(appointment, navigation);
-  };
+  // Handlers
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAppointments();
+    setRefreshing(false);
+  }, [fetchAppointments]);
 
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-  if (loading) {
-    return <LoadingScreen />;
+  const handleNewAppointment = useCallback(() => {
+    // Navegar a la pantalla de nuevo appointment
+    console.log('Navigate to new appointment screen');
+  }, []);
+
+  const handleReschedule = useCallback(async (appointmentId: string) => {
+    try {
+      await rescheduleAppointment(appointmentId);
+      // Mostrar modal de reprogramación o navegar
+    } catch (error) {
+      console.error('Error rescheduling:', error);
+    }
+  }, [rescheduleAppointment]);
+
+  const handleCancel = useCallback(async (appointmentId: string) => {
+    try {
+      await cancelAppointment(appointmentId);
+      // Mostrar confirmación
+    } catch (error) {
+      console.error('Error cancelling:', error);
+    }
+  }, [cancelAppointment]);
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={modernColors.primary} />
+      </View>
+    );
   }
 
   return (
-    <SafeAreaView style={appointmentStyles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={modernColors.backgroundWarm} />
-      
-      {/* Header */}
-      <AppointmentHeader onBookAppointment={handleBookAppointment} />
-
-      {/* Tabs */}
-      <AppointmentTabs
-        sections={sections}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-
-      {/* Content */}
-      <View style={appointmentStyles.content}>
-        <AppointmentList
-          appointments={currentSection?.data || []}
-          activeTab={activeTab}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          onBookAppointment={handleBookAppointment}
-          onAppointmentPress={handleAppointmentPress}
-          onReschedule={handleReschedule}
-          onCancel={handleCancelAppointment}
-          onWhatsAppReminder={handleWhatsAppReminder}
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#FFFFFF', '#FEF7F0', '#FFFCF8']}
+        style={styles.gradient}
+      >
+        {/* Header */}
+        <AppointmentHeader 
+          title="Mis Turnos"
+          onNewAppointment={handleNewAppointment}
         />
-      </View>
 
-      {/* Modal de detalles */}
-      <AppointmentDetailModal
-        visible={detailsModalVisible}
-        appointment={selectedAppointment}
-        onClose={() => setDetailsModalVisible(false)}
-        onReschedule={handleReschedule}
-        onCancel={handleCancelAppointment}
-        onWhatsAppReminder={handleWhatsAppReminder}
-      />
+        {/* Tabs */}
+        <AppointmentTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          upcomingCount={filteredAppointments.length}
+        />
+
+        {/* Content */}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={[modernColors.primary]}
+              tintColor={modernColors.primary}
+            />
+          }
+        >
+          {filteredAppointments.length === 0 ? (
+            <EmptyState
+              type={activeTab}
+              onAction={handleNewAppointment}
+            />
+          ) : (
+            <View style={styles.appointmentsList}>
+              {filteredAppointments.map((appointment, index) => (
+                <AppointmentCard
+                  key={appointment.id}
+                  appointment={appointment}
+                  onReschedule={() => handleReschedule(appointment.id)}
+                  onCancel={() => handleCancel(appointment.id)}
+                  isFirst={index === 0}
+                  isLast={index === filteredAppointments.length - 1}
+                  isPast={activeTab === 'history'}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+
+        {/* FAB */}
+        <AppointmentFAB onPress={handleNewAppointment} />
+      </LinearGradient>
     </SafeAreaView>
   );
 };
 
-export default AppointmentScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  gradient: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingBottom: modernSpacing.xxl * 3, // Espacio para FAB
+  },
+  appointmentsList: {
+    paddingHorizontal: modernSpacing.lg,
+    paddingTop: modernSpacing.md,
+  },
+});
+
+export default AppointmentsScreen;

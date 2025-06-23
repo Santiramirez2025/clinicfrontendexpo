@@ -1,7 +1,7 @@
 // ============================================================================
-// hooks/useVIP.ts - CUSTOM HOOK PARA LÓGICA VIP (CORREGIDO)
+// hooks/useVIP.ts - CUSTOM HOOK PARA LÓGICA VIP (CORREGIDO Y OPTIMIZADO) ✅
 // ============================================================================
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
@@ -9,7 +9,7 @@ import { setUser } from '../store/slices/authSlice';
 import { vipAPI, handleApiError } from '../services/api';
 
 // ============================================================================
-// TIPOS LOCALES (evita importar desde components para evitar dependencias circulares)
+// TIPOS E INTERFACES
 // ============================================================================
 export interface VIPBenefit {
   id: string;
@@ -48,6 +48,22 @@ export interface Testimonial {
   rating: number;
 }
 
+// ✅ CORREGIDO: Interface para el usuario tipado
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  isDemo: boolean;
+  vipStatus: boolean;
+  beautyPoints: number;
+  sessionsCompleted: number;
+  totalInvestment?: number;
+  memberSince?: string;
+}
+
 interface UseVIPReturn {
   // Estado
   loading: boolean;
@@ -69,9 +85,35 @@ interface UseVIPReturn {
   getCategoryForBenefit: (benefitId: string) => VIPBenefit['category'];
 }
 
-export const useVIP = (navigation: any): UseVIPReturn => {
+// ============================================================================
+// CONSTANTES
+// ============================================================================
+const BENEFIT_ICONS: Record<string, string> = {
+  'priority': '🚀',
+  'discounts': '🏷️',
+  'free-facial': '✨',
+  'double-points': '💎',
+  'personal-advisor': '👩‍⚕️',
+  'birthday-gift': '🎁',
+  'custom-guide': '📋',
+};
+
+const BENEFIT_CATEGORIES: Record<string, VIPBenefit['category']> = {
+  'priority': 'access',
+  'discounts': 'discounts', 
+  'free-facial': 'services',
+  'double-points': 'services',
+  'personal-advisor': 'support',
+  'birthday-gift': 'events',
+  'custom-guide': 'support',
+};
+
+// ============================================================================
+// HOOK PRINCIPAL
+// ============================================================================
+export const useVIP = (navigation?: any): UseVIPReturn => {
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useSelector((state: RootState) => state.auth.user) as User | null;
 
   // Estados
   const [loading, setLoading] = useState(true);
@@ -82,36 +124,23 @@ export const useVIP = (navigation: any): UseVIPReturn => {
   const [subscribing, setSubscribing] = useState(false);
 
   // ============================================================================
-  // HELPERS (definidos antes de ser usados)
+  // HELPERS MEMOIZADOS
   // ============================================================================
   const getIconForBenefit = useCallback((benefitId: string): string => {
-    const icons = {
-      'priority': '🚀',
-      'discounts': '🏷️',
-      'free-facial': '✨',
-      'double-points': '💎',
-      'personal-advisor': '👩‍⚕️',
-      'birthday-gift': '🎁',
-      'custom-guide': '📋',
-    };
-    return icons[benefitId as keyof typeof icons] || '⭐';
+    return BENEFIT_ICONS[benefitId] || '⭐';
   }, []);
 
+  // ✅ CORREGIDO: Función que siempre retorna el tipo correcto
   const getCategoryForBenefit = useCallback((benefitId: string): VIPBenefit['category'] => {
-    const categories = {
-      'priority': 'access',
-      'discounts': 'discounts', 
-      'free-facial': 'services',
-      'double-points': 'services',
-      'personal-advisor': 'support',
-      'birthday-gift': 'events',
-      'custom-guide': 'support',
-    };
-    return categories[benefitId as keyof typeof categories] || 'services';
+    // Asegurar que siempre retornamos un valor del tipo correcto
+    const category = BENEFIT_CATEGORIES[benefitId];
+    if (category && ['access', 'discounts', 'services', 'events', 'support'].includes(category)) {
+      return category;
+    }
+    return 'services'; // Valor por defecto del tipo correcto
   }, []);
 
   const scrollToPlans = useCallback(() => {
-    // En una implementación real, harías scroll a la sección de planes
     Alert.alert(
       'Planes VIP',
       'Selecciona tu plan preferido más abajo para comenzar a disfrutar de todos los beneficios exclusivos.'
@@ -170,12 +199,15 @@ export const useVIP = (navigation: any): UseVIPReturn => {
       const response = await vipAPI.subscribe(planType);
       
       if (response.success) {
-        // Actualizar estado del usuario
-        const updatedUser = {
-          ...user,
-          vipStatus: true,
-        };
-        dispatch(setUser(updatedUser));
+        // ✅ CORREGIDO: Verificar que user existe y tiene id
+        if (user && user.id) {
+          const updatedUser: User = {
+            ...user,
+            id: user.id, // Asegurar que id existe
+            vipStatus: true,
+          };
+          dispatch(setUser(updatedUser));
+        }
 
         Alert.alert(
           '¡Bienvenida al Club VIP! 👑',
@@ -183,7 +215,7 @@ export const useVIP = (navigation: any): UseVIPReturn => {
           [
             {
               text: 'Explorar beneficios',
-              onPress: () => loadVIPData(true), // Recargar datos
+              onPress: () => loadVIPData(true),
             }
           ]
         );
@@ -212,6 +244,12 @@ export const useVIP = (navigation: any): UseVIPReturn => {
     }
 
     if (vipStatus?.isVIP && benefit.available) {
+      // Solo navegar si navigation está disponible
+      if (!navigation) {
+        Alert.alert(benefit.title, benefit.description);
+        return;
+      }
+
       // Navegar según el tipo de beneficio
       switch (benefit.category) {
         case 'access':
@@ -251,6 +289,9 @@ export const useVIP = (navigation: any): UseVIPReturn => {
     loadVIPData();
   }, [loadVIPData]);
 
+  // ============================================================================
+  // RETURN
+  // ============================================================================
   return {
     // Estado
     loading,
@@ -272,3 +313,8 @@ export const useVIP = (navigation: any): UseVIPReturn => {
     getCategoryForBenefit,
   };
 };
+
+// ============================================================================
+// EXPORT DEFAULT ADICIONAL (opcional)
+// ============================================================================
+export default useVIP;

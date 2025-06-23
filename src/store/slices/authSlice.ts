@@ -1,5 +1,5 @@
 // ============================================================================
-// src/store/slices/authSlice.ts - INTEGRADO CON API SERVICE
+// src/store/slices/authSlice.ts - INTEGRADO CON API SERVICE - CORREGIDO
 // ============================================================================
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authAPI, handleApiError } from '../../services/api'; // ✅ Usar tu API service
@@ -69,9 +69,9 @@ const transformBackendUser = (backendUser: any, isDemo = false): User => {
     vipStatus: backendUser.vipStatus || false,
     beautyPoints: backendUser.beautyPoints || 0,
     sessionsCompleted: backendUser.sessionsCompleted || 0,
-    avatarUrl: backendUser.avatarUrl || null,
-    phone: backendUser.phone || null,
-    skinType: backendUser.skinType || null,
+    avatarUrl: backendUser.avatarUrl || undefined,
+    phone: backendUser.phone || undefined,
+    skinType: backendUser.skinType || undefined,
     totalInvestment: backendUser.totalInvestment || 0,
     memberSince: backendUser.memberSince || backendUser.createdAt || new Date().toISOString(),
   };
@@ -88,7 +88,7 @@ const calculateTokenExpiration = (expiresIn: string = '1h'): string => {
 };
 
 // ============================================================================
-// ASYNC THUNKS - USANDO API SERVICE
+// ASYNC THUNKS - USANDO API SERVICE (SIN DUPLICACIÓN)
 // ============================================================================
 
 export const demoLogin = createAsyncThunk(
@@ -477,11 +477,12 @@ const authSlice = createSlice({
 });
 
 // ============================================================================
-// EXPORTS - INCLUYENDO TODAS LAS ACCIONES Y THUNKS
+// EXPORTS - SIN DUPLICACIÓN
 // ============================================================================
 
+// ✅ ACTIONS del slice (solo estas)
 export const { 
-  // ✅ Acciones principales (usadas por LoginScreen)
+  // Acciones principales (usadas por LoginScreen)
   setUser,
   setToken,
   setRefreshToken,
@@ -497,7 +498,7 @@ export const {
   updateUserVIPStatus,
   updateUserBeautyPoints,
   updateUserProfile,
-  updateUserFromDashboard, // ✅ NUEVA para dashboard
+  updateUserFromDashboard,
   incrementSessionsCompleted,
   addBeautyPoints,
   
@@ -505,14 +506,8 @@ export const {
   checkTokenExpiration,
 } = authSlice.actions;
 
-// ✅ Thunks exportados
-export { 
-  demoLogin, 
-  regularLogin, 
-  registerUser,
-  logoutUser,
-  checkAuthStatus,
-};
+// ✅ Los async thunks ya están exportados arriba con 'export const'
+// NO necesitamos volver a exportarlos aquí
 
 // ✅ Reducer por defecto
 export default authSlice.reducer;

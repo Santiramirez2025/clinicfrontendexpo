@@ -1,11 +1,12 @@
 // ============================================================================
-// hooks/useProfile.ts - HOOK DE PERFIL OPTIMIZADO Y CORREGIDO ✅
+// hooks/useProfile.ts - HOOK CONECTADO AL BACKEND ✅
 // ============================================================================
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { setUser } from '../store/slices/authSlice';
+import { profileAPI, handleApiError } from '../services/api'; // ✅ Usar API existente
 
 // ============================================================================
 // INTERFACES Y TIPOS
@@ -27,7 +28,7 @@ export interface NotificationSettings {
   appointments: boolean;
   promotions: boolean;
   wellness: boolean;
-  followUp: boolean;
+  offers: boolean; // ✅ Campo correcto según tu backend
 }
 
 export interface UseProfileReturn {
@@ -72,55 +73,6 @@ interface AuthUser {
   sessionsCompleted: number;
   memberSince?: string;
 }
-
-// ============================================================================
-// MOCK API TEMPORAL
-// ============================================================================
-const mockProfileAPI = {
-  get: async () => ({
-    success: true,
-    data: {
-      user: {
-        id: 'demo-user-id',
-        firstName: 'Usuario',
-        lastName: 'Demo',
-        email: 'usuario@demo.com',
-        phone: '+34 666 123 456',
-        birthDate: '1990-01-01',
-        skinType: 'MIXED' as const,
-        treatmentPreferences: ['facial', 'masaje'],
-        preferredSchedule: ['morning', 'afternoon'],
-        notes: 'Cliente VIP',
-        preferredNotifications: {
-          appointments: true,
-          promotions: false,
-          wellness: true,
-          followUp: false
-        }
-      }
-    }
-  }),
-  
-  update: async (data: any) => ({
-    success: true,
-    data: { user: { ...data, id: 'demo-user-id' } }
-  }),
-  
-  updateNotifications: async (settings: NotificationSettings) => ({
-    success: true,
-    data: { notifications: settings }
-  })
-};
-
-const handleApiError = (error: any, fallbackMessage: string): string => {
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
-  }
-  if (error?.message) {
-    return error.message;
-  }
-  return fallbackMessage;
-};
 
 // ============================================================================
 // FUNCIÓN HELPER PARA USUARIO SEGURO
@@ -169,7 +121,7 @@ export const useProfile = (): UseProfileReturn => {
     appointments: true,
     promotions: false,
     wellness: true,
-    followUp: false
+    offers: false // ✅ Campo correcto
   });
 
   // Estados de carga
@@ -220,21 +172,22 @@ export const useProfile = (): UseProfileReturn => {
   }, [profile, validateEmail, validatePhone]);
 
   // ============================================================================
-  // FUNCIONES DE API
+  // FUNCIONES DE API - ✅ USANDO API EXISTENTE
   // ============================================================================
   const loadProfile = useCallback(async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
       
       console.log('📋 Cargando perfil del usuario...');
-      const response = await mockProfileAPI.get();
+      const response = await profileAPI.get(); // ✅ Usar API existente
       
       if (response.success && response.data) {
         const userData = response.data.user;
+        const userPreferences = response.data.preferences || {};
         
         console.log('✅ Perfil cargado:', userData);
         
-        // ✅ CORREGIDO: Asegurar que userData tenga id
+        // Mapear datos del backend a la estructura local
         setProfile({
           id: userData.id || user?.id || '',
           firstName: userData.firstName || '',
@@ -243,20 +196,19 @@ export const useProfile = (): UseProfileReturn => {
           phone: userData.phone || '',
           birthDate: userData.birthDate || '',
           skinType: userData.skinType,
-          treatmentPreferences: userData.treatmentPreferences || [],
-          preferredSchedule: userData.preferredSchedule || [],
-          notes: userData.notes || ''
+          // Estos campos son locales por ahora
+          treatmentPreferences: [],
+          preferredSchedule: [],
+          notes: ''
         });
 
-        // Configurar notificaciones
-        setNotifications(
-          userData.preferredNotifications || {
-            appointments: true,
-            promotions: false,
-            wellness: true,
-            followUp: false
-          }
-        );
+        // ✅ CORREGIDO: Usar campos correctos del backend
+        setNotifications({
+          appointments: userPreferences.appointments ?? true,
+          promotions: userPreferences.promotions ?? false,
+          wellness: userPreferences.wellness ?? true,
+          offers: userPreferences.offers ?? false // ✅ Campo correcto
+        });
       }
     } catch (error) {
       console.error('❌ Error loading profile:', error);
@@ -286,27 +238,24 @@ export const useProfile = (): UseProfileReturn => {
         phone: profile.phone.trim(),
         skinType: profile.skinType,
         birthDate: profile.birthDate,
-        treatmentPreferences: profile.treatmentPreferences,
-        preferredSchedule: profile.preferredSchedule,
-        notes: profile.notes
       };
 
       console.log('📤 Datos a enviar:', profileData);
       
-      const response = await mockProfileAPI.update(profileData);
+      const response = await profileAPI.update(profileData); // ✅ Usar API existente
 
       if (response.success) {
         console.log('✅ Perfil guardado exitosamente');
         
-        // ✅ CORREGIDO: Verificar que el usuario existe y tiene ID
+        // Actualizar usuario en Redux
         if (user && user.id) {
           const updatedUser: AuthUser = {
             ...user,
-            id: user.id, // ✅ MANTENER ID EXISTENTE
+            id: user.id,
             firstName: profile.firstName.trim(),
             lastName: profile.lastName.trim(),
             name: `${profile.firstName.trim()} ${profile.lastName.trim()}`,
-            email: user.email, // Mantener email original
+            email: user.email,
             role: user.role || 'user',
             isDemo: user.isDemo || false,
             vipStatus: user.vipStatus || false,
@@ -317,8 +266,6 @@ export const useProfile = (): UseProfileReturn => {
           };
 
           dispatch(setUser(updatedUser));
-        } else {
-          console.warn('⚠️ No se pudo actualizar el usuario en Redux: usuario sin ID');
         }
 
         setHasUnsavedChanges(false);
@@ -338,7 +285,7 @@ export const useProfile = (): UseProfileReturn => {
     try {
       console.log('🔔 Actualizando notificaciones:', newSettings);
       
-      const response = await mockProfileAPI.updateNotifications(newSettings);
+      const response = await profileAPI.updateNotifications(newSettings); // ✅ Usar API existente
       
       if (response.success) {
         console.log('✅ Notificaciones actualizadas');
@@ -393,8 +340,10 @@ export const useProfile = (): UseProfileReturn => {
   // EFFECTS
   // ============================================================================
   useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    if (user?.id) {
+      loadProfile();
+    }
+  }, [user?.id]);
 
   // Actualizar perfil cuando cambia el usuario
   useEffect(() => {

@@ -308,7 +308,6 @@ export const premiumCards = StyleSheet.create({
     backgroundColor: premiumColors.surface.glass,
     borderWidth: 1,
     borderColor: premiumColors.gray[200],
-    backdropFilter: 'blur(10px)', // Para web
   },
 
   outlined: {
@@ -835,16 +834,6 @@ export default {
 };
 
 // Individual exports
-export {
-  premiumShadows,
-  premiumButtons,
-  premiumCards,
-  premiumInputs,
-  premiumBadges,
-  premiumChips,
-  premiumLayouts,
-  premiumSpecialized,
-};
 
 // ============================================================================
 // 🔤 TYPESCRIPT TYPES
@@ -865,3 +854,14 @@ export type BadgeVariant = 'base' | 'success' | 'warning' | 'error' | 'info' | '
 export type ChipState = 'selected' | 'unselected';
 
 export type ComponentTheme = 'standard' | 'vip' | 'wellness' | 'serenity' | 'minimal';
+// Exportar todo de una vez
+export {
+  premiumShadows,
+  premiumButtons,
+  premiumCards,
+  premiumInputs,
+  premiumBadges,
+  premiumChips,
+  premiumLayouts,
+  premiumSpecialized,
+};

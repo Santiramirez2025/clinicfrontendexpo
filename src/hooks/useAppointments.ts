@@ -1,192 +1,279 @@
-// hooks/useAppointments.ts
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  Appointment, 
-  AppointmentFilters, 
-  CreateAppointmentDTO,
-  RescheduleAppointmentDTO 
-} from '../../types/appointment';
+import { useState, useCallback } from 'react';
+import { Alert } from 'react-native';
+import { appointmentAPI, handleApiError } from '../services/api';
 
-interface UseAppointmentsReturn {
-  appointments: Appointment[] | null;
-  loading: boolean;
-  error: string | null;
-  fetchAppointments: (filters?: AppointmentFilters) => Promise<void>;
-  createAppointment: (data: CreateAppointmentDTO) => Promise<Appointment>;
-  cancelAppointment: (appointmentId: string) => Promise<void>;
-  rescheduleAppointment: (data: RescheduleAppointmentDTO) => Promise<void>;
-  rateAppointment: (appointmentId: string, rating: number) => Promise<void>;
-}
+// ============================================================================
+// DEBUG HOOK PARA APPOINTMENTS - PASO A PASO ✅
+// ============================================================================
 
-export const useAppointments = (): UseAppointmentsReturn => {
-  const [appointments, setAppointments] = useState<Appointment[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const useBookAppointmentDebug = (navigation: any) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
-  // Datos de ejemplo para desarrollo
-  const mockAppointments: Appointment[] = [
-    {
-      id: '1',
-      date: '2024-06-25',
-      time: '10:00:00',
-      treatment: 'Limpieza Facial Profunda',
-      professional: 'Dra. María García',
-      clinic: 'Beauty Center Plaza',
-      status: 'CONFIRMED',
-      duration: 60,
-      price: 150,
-      beautyPointsEarned: 150,
-      category: 'facial',
-    },
-    {
-      id: '2',
-      date: '2024-06-28',
-      time: '15:30:00',
-      treatment: 'Masaje Relajante Premium',
-      professional: 'Carlos Méndez',
-      clinic: 'Beauty Center Plaza',
-      status: 'PENDING',
-      duration: 90,
-      price: 200,
-      beautyPointsEarned: 200,
-      category: 'masaje',
-      isVipExclusive: true,
-    },
-    {
-      id: '3',
-      date: '2024-06-20',
-      time: '14:00:00',
-      treatment: 'Manicure Spa',
-      professional: 'Ana López',
-      clinic: 'Beauty Center Norte',
-      status: 'COMPLETED',
-      duration: 45,
-      price: 80,
-      beautyPointsEarned: 80,
-      category: 'manicure',
-      rating: 5,
-    },
-    {
-      id: '4',
-      date: '2024-06-18',
-      time: '11:00:00',
-      treatment: 'Tratamiento Antiedad',
-      professional: 'Dra. María García',
-      clinic: 'Beauty Center Plaza',
-      status: 'CANCELLED',
-      duration: 75,
-      price: 250,
-      category: 'facial',
-    },
-  ];
-
-  const fetchAppointments = useCallback(async (filters?: AppointmentFilters) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // En producción, aquí iría la llamada real a la API
-      // const response = await api.get('/appointments', { params: filters });
-      // setAppointments(response.data);
-      
-      setAppointments(mockAppointments);
-    } catch (err) {
-      setError('Error al cargar las citas');
-      console.error('Error fetching appointments:', err);
-    } finally {
-      setLoading(false);
-    }
+  const addDebugLog = useCallback((message: string) => {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log('🔍 DEBUG:', logMessage);
+    setDebugLogs(prev => [...prev, logMessage]);
   }, []);
 
-  const createAppointment = useCallback(async (data: CreateAppointmentDTO): Promise<Appointment> => {
+  const submitBookingDebug = useCallback(async (bookingData: any): Promise<boolean> => {
     try {
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSubmitting(true);
+      addDebugLog('🚀 INICIANDO PROCESO DE RESERVA');
       
-      const newAppointment: Appointment = {
-        id: Date.now().toString(),
-        date: data.date,
-        time: data.time,
-        treatment: 'Nuevo Tratamiento', // En producción vendría del treatmentId
-        professional: 'Profesional', // En producción vendría del professionalId
-        clinic: 'Clínica', // En producción vendría del clinicId
-        status: 'PENDING',
-        notes: data.notes,
+      // ✅ STEP 1: Validar datos de entrada
+      addDebugLog(`📋 Datos recibidos: ${JSON.stringify(bookingData, null, 2)}`);
+      
+      if (!bookingData.treatmentId || !bookingData.date || !bookingData.time) {
+        addDebugLog('❌ ERROR: Datos incompletos');
+        throw new Error('Datos incompletos');
+      }
+      
+      // ✅ STEP 2: Preparar payload para el backend
+      const payload = {
+        treatmentId: bookingData.treatmentId,
+        date: bookingData.date,
+        time: bookingData.time,
+        ...(bookingData.professionalId && { professionalId: bookingData.professionalId }),
+        ...(bookingData.notes && { notes: bookingData.notes.trim() }),
       };
       
-      setAppointments(prev => prev ? [newAppointment, ...prev] : [newAppointment]);
-      return newAppointment;
-    } catch (err) {
-      throw new Error('Error al crear la cita');
-    }
-  }, []);
-
-  const cancelAppointment = useCallback(async (appointmentId: string) => {
-    try {
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 500));
+      addDebugLog(`📤 Payload preparado: ${JSON.stringify(payload, null, 2)}`);
       
-      setAppointments(prev => 
-        prev?.map(apt => 
-          apt.id === appointmentId 
-            ? { ...apt, status: 'CANCELLED' as const }
-            : apt
-        ) || null
+      // ✅ STEP 3: Verificar token de autorización
+      const token = await import('expo-secure-store').then(store => 
+        store.getItemAsync('accessToken')
       );
-    } catch (err) {
-      throw new Error('Error al cancelar la cita');
-    }
-  }, []);
-
-  const rescheduleAppointment = useCallback(async (data: RescheduleAppointmentDTO) => {
-    try {
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 500));
       
-      setAppointments(prev => 
-        prev?.map(apt => 
-          apt.id === data.appointmentId 
-            ? { ...apt, date: data.newDate, time: data.newTime, status: 'PENDING' as const }
-            : apt
-        ) || null
-      );
-    } catch (err) {
-      throw new Error('Error al reprogramar la cita');
-    }
-  }, []);
-
-  const rateAppointment = useCallback(async (appointmentId: string, rating: number) => {
-    try {
-      // Simular llamada API
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!token) {
+        addDebugLog('❌ ERROR: No hay token de autorización');
+        throw new Error('No hay token de autorización');
+      }
       
-      setAppointments(prev => 
-        prev?.map(apt => 
-          apt.id === appointmentId 
-            ? { ...apt, rating }
-            : apt
-        ) || null
+      addDebugLog('✅ Token encontrado');
+      
+      // ✅ STEP 4: Realizar petición HTTP directa para debug
+      const baseURL = 'http://192.168.1.174:3000'; // Tu IP del backend
+      const endpoint = `${baseURL}/api/appointments`;
+      
+      addDebugLog(`🌐 Enviando a: ${endpoint}`);
+      
+      const fetchResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      addDebugLog(`📡 Status de respuesta: ${fetchResponse.status} ${fetchResponse.statusText}`);
+      
+      // ✅ STEP 5: Procesar respuesta
+      let responseData;
+      const contentType = fetchResponse.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await fetchResponse.json();
+      } else {
+        const textResponse = await fetchResponse.text();
+        addDebugLog(`📄 Respuesta no JSON: ${textResponse}`);
+        throw new Error(`Respuesta inesperada del servidor: ${textResponse}`);
+      }
+      
+      addDebugLog(`📥 Respuesta del servidor: ${JSON.stringify(responseData, null, 2)}`);
+      
+      // ✅ STEP 6: Verificar éxito
+      if (fetchResponse.ok && responseData.success) {
+        addDebugLog('✅ RESERVA CREADA EXITOSAMENTE');
+        
+        Alert.alert(
+          '¡Cita agendada! 🎉',
+          'Tu cita ha sido agendada exitosamente.',
+          [
+            {
+              text: 'Ver mis citas',
+              onPress: () => {
+                addDebugLog('🧭 Navegando a Appointments');
+                navigation.navigate('Appointments');
+              }
+            },
+            {
+              text: 'Ir al inicio',
+              onPress: () => {
+                addDebugLog('🧭 Navegando a Dashboard');
+                navigation.navigate('Dashboard');
+              }
+            }
+          ]
+        );
+        
+        return true;
+      } else {
+        addDebugLog(`❌ ERROR DEL SERVIDOR: ${JSON.stringify(responseData.error || responseData)}`);
+        throw new Error(responseData.error?.message || responseData.message || 'Error del servidor');
+      }
+      
+    } catch (error: any) {
+      addDebugLog(`💥 EXCEPCIÓN CAPTURADA: ${error.message}`);
+      addDebugLog(`📊 Stack trace: ${error.stack}`);
+      
+      Alert.alert(
+        'Error de Debug',
+        `No se pudo agendar la cita:\n${error.message}\n\nRevisa la consola para más detalles.`,
+        [{ text: 'OK' }]
       );
-    } catch (err) {
-      throw new Error('Error al calificar la cita');
+      
+      return false;
+    } finally {
+      setSubmitting(false);
+      addDebugLog('🏁 PROCESO FINALIZADO');
     }
-  }, []);
+  }, [navigation, addDebugLog]);
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [fetchAppointments]);
+  // ✅ FUNCIÓN PARA EXPORTAR LOGS
+  const exportDebugLogs = useCallback(() => {
+    const logsText = debugLogs.join('\n');
+    console.log('📋 LOGS COMPLETOS:');
+    console.log(logsText);
+    return logsText;
+  }, [debugLogs]);
+
+  // ✅ FUNCIÓN PARA LIMPIAR LOGS
+  const clearDebugLogs = useCallback(() => {
+    setDebugLogs([]);
+    addDebugLog('🧹 Logs limpiados');
+  }, [addDebugLog]);
 
   return {
-    appointments,
-    loading,
-    error,
-    fetchAppointments,
-    createAppointment,
-    cancelAppointment,
-    rescheduleAppointment,
-    rateAppointment,
+    submitBookingDebug,
+    submitting,
+    debugLogs,
+    exportDebugLogs,
+    clearDebugLogs,
   };
+};
+
+// ============================================================================
+// HOOK PARA VERIFICAR CONEXIÓN CON EL BACKEND ✅
+// ============================================================================
+
+export const useBackendConnection = () => {
+  const [testing, setTesting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
+
+  const testConnection = useCallback(async () => {
+    try {
+      setTesting(true);
+      console.log('🔌 Probando conexión con el backend...');
+      
+      const baseURL = 'http://192.168.1.174:3000';
+      const healthEndpoint = `${baseURL}/api/health`; // Endpoint de salud
+      
+      // Test 1: Endpoint de salud (sin autenticación)
+      const healthResponse = await fetch(healthEndpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('🏥 Health check:', healthResponse.status, healthResponse.statusText);
+      
+      // Test 2: Endpoint de appointments (con autenticación)
+      const token = await import('expo-secure-store').then(store => 
+        store.getItemAsync('accessToken')
+      );
+      
+      if (token) {
+        const appointmentsResponse = await fetch(`${baseURL}/api/appointments`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        console.log('📅 Appointments endpoint:', appointmentsResponse.status, appointmentsResponse.statusText);
+        
+        if (appointmentsResponse.ok) {
+          setConnectionStatus('connected');
+          Alert.alert('✅ Conexión OK', 'El backend está funcionando correctamente');
+        } else {
+          setConnectionStatus('error');
+          Alert.alert('⚠️ Error de Auth', 'Backend conectado pero hay problemas de autenticación');
+        }
+      } else {
+        Alert.alert('❌ Sin Token', 'No hay token de autenticación disponible');
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Error de conexión:', error);
+      setConnectionStatus('error');
+      Alert.alert('❌ Error de Conexión', `No se puede conectar al backend:\n${error.message}`);
+    } finally {
+      setTesting(false);
+    }
+  }, []);
+
+  return {
+    testConnection,
+    testing,
+    connectionStatus,
+  };
+};
+
+// ============================================================================
+// HOOK PARA MONITOREAR RESPUESTAS DEL API ✅
+// ============================================================================
+
+export const useAPIMonitor = () => {
+  const [apiCalls, setApiCalls] = useState<any[]>([]);
+
+  const logAPICall = useCallback((method: string, url: string, payload?: any, response?: any, error?: any) => {
+    const call = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      method,
+      url,
+      payload,
+      response,
+      error,
+      status: error ? 'error' : 'success',
+    };
+    
+    setApiCalls(prev => [call, ...prev.slice(0, 9)]); // Mantener solo las últimas 10
+    
+    console.log('📊 API Call Logged:', call);
+  }, []);
+
+  const clearAPILogs = useCallback(() => {
+    setApiCalls([]);
+  }, []);
+
+  return {
+    apiCalls,
+    logAPICall,
+    clearAPILogs,
+  };
+};
+
+// ============================================================================
+// WRAPPER PARA appointmentAPI CON LOGGING ✅
+// ============================================================================
+
+export const createAppointmentWithLogging = async (bookingData: any, logFunction: Function) => {
+  try {
+    logFunction('POST', '/api/appointments', bookingData);
+    
+    const response = await appointmentAPI.create(bookingData);
+    
+    logFunction('POST', '/api/appointments', bookingData, response);
+    
+    return response;
+  } catch (error) {
+    logFunction('POST', '/api/appointments', bookingData, null, error);
+    throw error;
+  }
 };

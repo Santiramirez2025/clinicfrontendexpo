@@ -1,497 +1,213 @@
-// screens/dashboard/DashboardScreen.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import {
   View,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  RefreshControl,
-  Animated,
-  Dimensions,
-  StatusBar,
-  ActivityIndicator,
   Text,
+  ScrollView,
+  RefreshControl,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { modernColors, modernSpacing } from '../../styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDashboard } from '../../hooks/useDashboard';
+import { modernColors, modernTypography } from '../../styles';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Componentes
+import WelcomeHeader from '../../components/dashboard/WelcomeHeader';
+import { NextAppointment, NewAppointmentButton } from '../../components/dashboard/AppointmentCard';
+import { BeautyPointsCard, FeaturedTreatments, WellnessTip } from '../../components/dashboard/PointsAndTreatments';
 
-// Dashboard simplificado y funcional
-const DashboardScreen: React.FC<any> = ({ navigation, route }) => {
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const scrollY = useRef(new Animated.Value(0)).current;
-  
-  // Usuario mock por ahora
-  const user = { 
-    firstName: 'María', 
-    vipStatus: false,
-    beautyPoints: 1250 
-  };
+const DashboardScreen = ({ navigation }: any) => {
+  const {
+    dashboardData,
+    loading,
+    refreshing,
+    user,
+    error,
+    selectedClinic,
+    handleNewAppointment,
+    handleNextAppointmentPress,
+    handleChangeClinic,
+    handleProfilePress,
+    handleBeautyPointsPress,
+    handleTreatmentPress,
+    handleSeeAllTreatments,
+    onRefresh,
+    formatAppointmentDate,
+    formatAppointmentTime,
+    retryLoad
+  } = useDashboard(navigation);
 
-  // Datos mock del dashboard
-  const dashboardData = {
-    nextAppointment: {
-      id: '1',
-      treatment: 'Limpieza Facial Profunda',
-      date: '2024-06-25',
-      time: '10:00:00',
-      professional: 'Dra. García',
-      clinic: 'Beauty Center',
-      status: 'CONFIRMED' as const,
-    },
-    clinicInfo: {
-      name: 'Beauty Center Plaza',
-      address: 'Av. Principal 123',
-      phone: '+34 123 456 789',
-      schedule: 'Lun-Vie: 9:00-20:00',
-      isOpen: true,
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // Simular carga
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.95],
-    extrapolate: 'clamp',
-  });
-
-  if (loading) {
+  if (loading && !dashboardData) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={modernColors.primary} />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingEmoji}>💆‍♀️</Text>
+          <Text style={styles.loadingText}>Cargando tu espacio de belleza...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error && !dashboardData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorEmoji}>⚠️</Text>
+          <Text style={styles.errorTitle}>Algo salió mal</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={retryLoad}>
+            <Text style={styles.retryButtonText}>Intentar de nuevo</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      <LinearGradient
-        colors={['#FFFFFF', '#FEF7F0', '#FFFCF8'] as const}
-        style={styles.gradient}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
       >
-        <Animated.ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
-          )}
-          scrollEventThrottle={16}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={[modernColors.primary]}
-              tintColor={modernColors.primary}
+        <View style={styles.headerContainer}>
+          <WelcomeHeader
+            user={user}
+            onProfilePress={handleProfilePress}
+            selectedClinic={selectedClinic}
+            onChangeClinic={handleChangeClinic}
+          />
+        </View>
+
+        <View style={styles.content}>
+          <View style={styles.appointmentSection}>
+            <NextAppointment
+              appointment={dashboardData?.nextAppointment}
+              onPress={handleNextAppointmentPress}
+              onNewAppointment={handleNewAppointment}
+              formatDate={formatAppointmentDate}
+              formatTime={formatAppointmentTime}
             />
-          }
-        >
-          {/* Header Simple */}
-          <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
-            <View>
-              <Text style={styles.greeting}>Buenos días,</Text>
-              <Text style={styles.userName}>{user.firstName}</Text>
-              <View style={styles.pointsContainer}>
-                <Text style={styles.pointsText}>💎 {user.beautyPoints} puntos</Text>
-              </View>
-            </View>
-          </Animated.View>
 
-          {/* Info Clínica */}
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>📍 {dashboardData.clinicInfo.name}</Text>
-              <Text style={styles.cardText}>{dashboardData.clinicInfo.address}</Text>
-              <Text style={styles.cardText}>📞 {dashboardData.clinicInfo.phone}</Text>
-              <Text style={styles.cardText}>🕐 {dashboardData.clinicInfo.schedule}</Text>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>
-                  {dashboardData.clinicInfo.isOpen ? '🟢 Abierto' : '🔴 Cerrado'}
-                </Text>
-              </View>
-            </View>
+            <NewAppointmentButton onPress={handleNewAppointment} />
           </View>
 
-          {/* Próxima Cita */}
-          <View style={styles.section}>
-            <View style={styles.appointmentCard}>
-              <View style={styles.appointmentHeader}>
-                <Text style={styles.appointmentLabel}>Próxima cita</Text>
-                <View style={[styles.statusBadge, styles.confirmedBadge]}>
-                  <Text style={styles.statusText}>✓ Confirmada</Text>
-                </View>
-              </View>
-              
-              <Text style={styles.appointmentTitle}>
-                {dashboardData.nextAppointment.treatment}
-              </Text>
-              <Text style={styles.appointmentInfo}>
-                📅 25 de Junio • 10:00 AM
-              </Text>
-              <Text style={styles.appointmentInfo}>
-                👩‍⚕️ {dashboardData.nextAppointment.professional}
-              </Text>
-              
-              <View style={styles.appointmentActions}>
-                <View style={styles.secondaryButton}>
-                  <Text style={styles.secondaryButtonText}>Modificar</Text>
-                </View>
-                <View style={styles.primaryButton}>
-                  <LinearGradient
-                    colors={[modernColors.primary, '#E8956B'] as const}
-                    style={styles.primaryButtonGradient}
-                  >
-                    <Text style={styles.primaryButtonText}>Ver detalles</Text>
-                  </LinearGradient>
-                </View>
-              </View>
-            </View>
+          <View style={styles.pointsSection}>
+            <BeautyPointsCard 
+              user={dashboardData?.user || user} 
+              onPress={handleBeautyPointsPress} 
+            />
           </View>
 
-          {/* Check-in Bienestar */}
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>☀️ Check-in Diario</Text>
-              <Text style={styles.cardSubtitle}>Mantén tu rutina de bienestar</Text>
-              
-              <View style={styles.tipBox}>
-                <Text style={styles.tipTitle}>💧 Tip del día</Text>
-                <Text style={styles.tipText}>
-                  Bebe al menos 8 vasos de agua al día para mantener tu piel radiante
-                </Text>
-              </View>
-              
-              <View style={styles.checkInButton}>
-                <LinearGradient
-                  colors={[modernColors.primary, '#E8956B'] as const}
-                  style={styles.checkInGradient}
-                >
-                  <Text style={styles.checkInText}>Hacer Check-in</Text>
-                </LinearGradient>
-              </View>
-            </View>
+          <View style={styles.treatmentsSection}>
+            <FeaturedTreatments
+              treatments={dashboardData?.featuredTreatments}
+              onTreatmentPress={handleTreatmentPress}
+              onSeeAll={handleSeeAllTreatments}
+            />
           </View>
 
-          {/* CTA VIP */}
-          {!user.vipStatus && (
-            <View style={styles.section}>
-              <LinearGradient
-                colors={['#FFD700', '#FFA500', '#FF8C00'] as const}
-                style={styles.vipCard}
-              >
-                <Text style={styles.vipEmoji}>👑</Text>
-                <Text style={styles.vipTitle}>
-                  {user.firstName}, es hora de brillar
-                </Text>
-                <Text style={styles.vipSubtitle}>
-                  Únete al Club VIP y duplica tus puntos
-                </Text>
-                
-                <View style={styles.vipButton}>
-                  <Text style={styles.vipButtonText}>Descubre el Club VIP</Text>
-                </View>
-              </LinearGradient>
-            </View>
-          )}
-
-          {/* Botón Flotante de Reservar */}
-          <View style={styles.floatingButtonContainer}>
-            <TouchableOpacity
-              style={styles.floatingButton}
-              onPress={() => {
-                if (navigation?.navigate) {
-                  navigation.navigate('Appointments');
-                }
-              }}
-              activeOpacity={0.9}
-            >
-              <LinearGradient
-                colors={[modernColors.primary, '#E8956B', '#D6845A'] as const}
-                style={styles.floatingButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.floatingButtonIcon}>+</Text>
-                <Text style={styles.floatingButtonText}>Reservar</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+          <View style={styles.wellnessSection}>
+            <WellnessTip tip={dashboardData?.wellnessTip} />
           </View>
 
-          <View style={styles.bottomSpacing} />
-        </Animated.ScrollView>
-      </LinearGradient>
+          {/* Espaciado para navbar */}
+          <View style={styles.navbarSpacer} />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const styles = {
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  gradient: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
+    backgroundColor: modernColors.background,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
   },
-  header: {
-    padding: modernSpacing.lg,
-    paddingTop: modernSpacing.xl,
-  },
-  greeting: {
-    fontSize: 16,
-    color: modernColors.gray600,
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: modernColors.gray900,
-    marginBottom: 8,
-  },
-  pointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pointsText: {
-    fontSize: 14,
-    color: modernColors.gray700,
-    fontWeight: '600',
-  },
-  section: {
-    paddingHorizontal: modernSpacing.lg,
-    marginBottom: modernSpacing.lg,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: modernSpacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: modernColors.gray900,
-    marginBottom: 12,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: modernColors.gray600,
-    marginBottom: 16,
-  },
-  cardText: {
-    fontSize: 14,
-    color: modernColors.gray700,
-    marginBottom: 8,
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: modernColors.gray100,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: modernColors.gray700,
-  },
-  appointmentCard: {
-    backgroundColor: '#E8F5F1',
-    borderRadius: 16,
-    padding: modernSpacing.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  appointmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  appointmentLabel: {
-    fontSize: 12,
-    color: modernColors.gray600,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  confirmedBadge: {
-    backgroundColor: modernColors.success + '20',
-  },
-  appointmentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: modernColors.gray900,
-    marginBottom: 12,
-  },
-  appointmentInfo: {
-    fontSize: 14,
-    color: modernColors.gray700,
-    marginBottom: 6,
-  },
-  appointmentActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-  },
-  secondaryButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: modernColors.gray300,
-    backgroundColor: '#FFFFFF',
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    color: modernColors.gray700,
-    fontWeight: '600',
-  },
-  primaryButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  primaryButtonGradient: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  tipBox: {
-    backgroundColor: modernColors.gray50,
-    padding: modernSpacing.md,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  tipTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: modernColors.gray700,
-    marginBottom: 4,
-  },
-  tipText: {
-    fontSize: 14,
-    color: modernColors.gray600,
-    lineHeight: 20,
-  },
-  checkInButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  checkInGradient: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  checkInText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  vipCard: {
-    borderRadius: 16,
-    padding: modernSpacing.xl,
-    alignItems: 'center',
-    shadowColor: modernColors.vip,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  vipEmoji: {
+  loadingEmoji: {
     fontSize: 48,
     marginBottom: 16,
   },
-  vipTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
+  loadingText: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    color: modernColors.gray600,
+    textAlign: 'center' as const,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+  },
+  errorEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: modernTypography.fontSizeModern.xl,
+    fontWeight: '600' as const,
+    color: modernColors.text,
     marginBottom: 8,
+    textAlign: 'center' as const,
   },
-  vipSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    marginBottom: 20,
+  errorText: {
+    fontSize: modernTypography.fontSizeModern.base,
+    color: modernColors.gray600,
+    textAlign: 'center' as const,
+    marginBottom: 24,
   },
-  vipButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  retryButton: {
+    backgroundColor: modernColors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 24,
+    borderRadius: 8,
   },
-  vipButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: modernColors.vip,
+  retryButtonText: {
+    color: modernColors.white,
+    fontSize: modernTypography.fontSizeModern.base,
+    fontWeight: '600' as const,
   },
-  bottomSpacing: {
-    height: 160, // Aumentado para dar espacio al botón flotante
+  scrollView: {
+    flex: 1,
   },
-  floatingButtonContainer: {
-    position: 'absolute',
-    bottom: 90, // Aumentado para que esté sobre la navbar
-    right: 20,
-    zIndex: 999,
+  scrollViewContent: {
+    flexGrow: 1,
   },
-  floatingButton: {
-    borderRadius: 30,
-    overflow: 'hidden',
-    elevation: 6,
-    shadowColor: modernColors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 5,
+    backgroundColor: modernColors.background,
   },
-  floatingButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 8,
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
   },
-  floatingButtonIcon: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: '700',
+  appointmentSection: {
+    marginTop: 15,
+    marginBottom: 25,
   },
-  floatingButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+  pointsSection: {
+    marginBottom: 25,
   },
-});
+  treatmentsSection: {
+    marginBottom: 30,
+  },
+  wellnessSection: {
+    marginBottom: 30,
+  },
+  navbarSpacer: {
+    height: 140, // Más espacio para navbar elegante + margen
+    backgroundColor: 'transparent',
+  },
+};
 
 export default DashboardScreen;

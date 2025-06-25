@@ -1,15 +1,17 @@
 // ============================================================================
-// hooks/useLogin.ts - HOOK DE LOGIN OPTIMIZADO
+// hooks/useLogin.ts - HOOK DE LOGIN CORREGIDO PARA TU ESTRUCTURA
 // ============================================================================
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { setUser, setToken } from '../store/slices/authSlice';
+
+// ✅ IMPORTAR ACCIONES ESPECÍFICAS QUE EXISTEN EN TU SLICE
+import { setUser, setToken, loginSuccess } from '../store/slices/authSlice';
 import { authAPI, handleApiError } from '../services/api';
 import ApiService from '../services/api';
 
 // ============================================================================
-// TIPOS Y INTERFACES
+// TIPOS Y INTERFACES (MANTENIDOS IGUALES)
 // ============================================================================
 export interface LoginFormData {
   email: string;
@@ -43,10 +45,9 @@ export interface LoginUser {
   firstName: string;
   lastName: string;
   role: 'patient' | 'demo';
-  isDemo: boolean;
-  vipStatus: boolean;
   beautyPoints: number;
   sessionsCompleted: number;
+  vipStatus: boolean;
 }
 
 interface UseLoginReturn {
@@ -91,8 +92,8 @@ export const useLogin = (): UseLoginReturn => {
   const dispatch = useDispatch();
   
   // Estados del formulario
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@bellezaestetica.com');
+  const [password, setPassword] = useState('demo123');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   
@@ -144,10 +145,12 @@ export const useLogin = (): UseLoginReturn => {
   const checkBackendConnection = useCallback(async () => {
     try {
       setConnectionStatus('checking');
+      console.log('🔌 Verificando conexión con backend...');
       const isConnected = await ApiService.checkConnection();
       setConnectionStatus(isConnected ? 'connected' : 'error');
+      console.log(`🔌 Estado conexión: ${isConnected ? 'CONECTADO' : 'ERROR'}`);
     } catch (error) {
-      console.log('Connection check failed:', error);
+      console.log('❌ Error verificando conexión:', error);
       setConnectionStatus('error');
     }
   }, []);
@@ -186,17 +189,16 @@ export const useLogin = (): UseLoginReturn => {
   }, [clearErrors]);
 
   // ============================================================================
-  // FUNCIONES DE AUTENTICACIÓN
+  // FUNCIONES DE AUTENTICACIÓN CORREGIDAS
   // ============================================================================
-  const createUserPayload = useCallback((userData: any, isDemo = false): LoginUser => {
+  const createUserPayload = useCallback((userData: any): LoginUser => {
     return {
       id: userData.id,
       name: `${userData.firstName} ${userData.lastName}`,
       email: userData.email,
       firstName: userData.firstName,
       lastName: userData.lastName,
-      role: isDemo ? 'demo' : 'patient',
-      isDemo,
+      role: userData.isDemo ? 'demo' : 'patient',
       vipStatus: userData.vipStatus || false,
       beautyPoints: userData.beautyPoints || 0,
       sessionsCompleted: userData.sessionsCompleted || 0,
@@ -204,22 +206,42 @@ export const useLogin = (): UseLoginReturn => {
   }, []);
 
   const handleSuccessfulAuth = useCallback((response: LoginResponse, isDemo = false) => {
-    const userPayload = createUserPayload(response.data.user, isDemo);
-    
-    dispatch(setUser(userPayload));
-    dispatch(setToken(response.data.tokens.accessToken));
-    
-    const welcomeMessage = isDemo ? 
-      `¡Bienvenida! ✨\nHola ${response.data.user.firstName}, tu experiencia de belleza comienza ahora.` :
-      response.data.user.vipStatus ? 
-        `¡Hola ${response.data.user.firstName}! 🌸\nBienvenida de vuelta, miembro VIP 👑` : 
-        `¡Hola ${response.data.user.firstName}! 🌸\nNos alegra tenerte de vuelta`;
-    
-    const [title, message] = welcomeMessage.split('\n');
-    
-    Alert.alert(title, message, [
-      { text: isDemo ? 'Continuar' : 'Comenzar', style: 'default' }
-    ]);
+    try {
+      console.log('🎉 Procesando autenticación exitosa...');
+      
+      const userPayload = createUserPayload(response.data.user);
+      
+      console.log('👤 Usuario a almacenar:', userPayload);
+      console.log('🔑 Token recibido:', response.data.tokens.accessToken.substring(0, 20) + '...');
+      
+      // ✅ DESPACHAR ACCIONES CORREGIDAS
+      dispatch(setUser(userPayload));
+      dispatch(setToken(response.data.tokens.accessToken));
+      
+      // O alternativamente usar loginSuccess que combina ambas
+      // dispatch(loginSuccess({ 
+      //   user: userPayload, 
+      //   token: response.data.tokens.accessToken 
+      // }));
+      
+      const welcomeMessage = isDemo ? 
+        `¡Bienvenida! ✨\nHola ${response.data.user.firstName}, tu experiencia de belleza comienza ahora.` :
+        response.data.user.vipStatus ? 
+          `¡Hola ${response.data.user.firstName}! 🌸\nBienvenida de vuelta, miembro VIP 👑` : 
+          `¡Hola ${response.data.user.firstName}! 🌸\nNos alegra tenerte de vuelta`;
+      
+      const [title, message] = welcomeMessage.split('\n');
+      
+      Alert.alert(title, message, [
+        { text: isDemo ? 'Continuar' : 'Comenzar', style: 'default' }
+      ]);
+      
+      console.log('✅ Redux actualizado correctamente');
+      
+    } catch (error) {
+      console.error('❌ Error procesando autenticación exitosa:', error);
+      Alert.alert('Error', 'Error procesando login exitoso');
+    }
   }, [dispatch, createUserPayload]);
 
   const handleLogin = useCallback(async () => {
@@ -281,7 +303,7 @@ export const useLogin = (): UseLoginReturn => {
     if (connectionStatus === 'error') {
       Alert.alert(
         'Sin conexión',
-        'Por favor verifica que tu servidor esté corriendo.',
+        'Por favor verifica que tu servidor esté corriendo y la IP sea correcta.',
         [
           { text: 'Reintentar', onPress: checkBackendConnection },
           { text: 'Cancelar', style: 'cancel' }
@@ -299,13 +321,22 @@ export const useLogin = (): UseLoginReturn => {
       if (response.success) {
         console.log('✅ Demo login exitoso:', response.data.user.firstName);
         handleSuccessfulAuth(response, true);
+      } else {
+        throw new Error('Demo login failed');
       }
       
     } catch (error: any) {
       console.error('❌ Demo login error:', error);
       
       const errorMessage = handleApiError(error, 'No se pudo acceder al modo demo');
-      Alert.alert('Error de conexión', errorMessage);
+      Alert.alert(
+        'Error de conexión', 
+        `${errorMessage}\n\nVerifica que tu servidor backend esté corriendo en el puerto 3000.`,
+        [
+          { text: 'Reintentar', onPress: handleDemoLogin },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
+      );
     } finally {
       setLoading(false);
     }

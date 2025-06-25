@@ -1,122 +1,105 @@
-// ============================================================================
-// screens/VIPScreen.tsx - PANTALLA VIP REFACTORIZADA
-// ============================================================================
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StatusBar,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Importar custom hook
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import { useVIP } from '../../hooks/useVIP';
+import { modernColors, modernTypography } from '../../styles';
 
-// Importar componentes modularizados
+// Componentes
 import {
   VIPHeader,
-  VIPStatusCard,
-  BenefitsSection,
-  PricingSection,
-  LoadingOverlay,
-} from '../../components/VIP';
+  BenefitsList,
+  CurrentPromotions,
+  VIPTestimonials,
+  VIPPlans,
+} from '../../components/VIP/VIPComponents';
 
-// Importar estilos
-import { vipStyles } from '../../components/VIP/styles';
-import { modernColors } from '../../styles';
-
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
-const VIPScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  // Usar custom hook para toda la lógica
+const VIPScreen = ({ navigation }: any) => {
+  const user = useSelector((state: RootState) => state.auth.user);
+  
   const {
-    // Estado
     loading,
     refreshing,
     subscribing,
     vipStatus,
     benefits,
-    
-    // Funciones
+    testimonials,
     handleSubscribe,
     handleBenefitPress,
-    handleUpgrade,
     onRefresh,
   } = useVIP(navigation);
 
-  // ============================================================================
-  // RENDER LOADING
-  // ============================================================================
   if (loading) {
     return (
-      <SafeAreaView style={vipStyles.container}>
-        <View style={vipStyles.loadingContainer}>
-          <ActivityIndicator size="large" color={modernColors.vip} />
-          <Text style={vipStyles.loadingText}>Cargando beneficios VIP...</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingEmoji}>👑</Text>
+          <Text style={styles.loadingText}>Cargando experiencia VIP...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // ============================================================================
-  // RENDER PRINCIPAL
-  // ============================================================================
   return (
-    <SafeAreaView style={vipStyles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={modernColors.backgroundWarm} />
-      
+    <SafeAreaView style={styles.container}>
       <ScrollView
-        style={vipStyles.scrollView}
-        contentContainerStyle={vipStyles.scrollContent}
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[modernColors.vip]}
-            tintColor={modernColors.vip}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Header VIP */}
-        <VIPHeader
-          isVIP={vipStatus?.isVIP || false}
-          onUpgradePress={handleUpgrade}
-        />
+        <VIPHeader user={user} vipStatus={vipStatus} />
 
-        {/* Status Card */}
-        {vipStatus && (
-          <VIPStatusCard vipStatus={vipStatus} />
-        )}
-
-        {/* Beneficios */}
-        <BenefitsSection
+        <BenefitsList
           benefits={benefits}
-          isVIP={vipStatus?.isVIP || false}
+          vipStatus={vipStatus}
           onBenefitPress={handleBenefitPress}
         />
 
-        {/* Planes de suscripción */}
-        <PricingSection
-          isVIP={vipStatus?.isVIP || false}
+        <CurrentPromotions vipStatus={vipStatus} />
+
+        <VIPTestimonials testimonials={testimonials} />
+
+        <VIPPlans
+          vipStatus={vipStatus}
           onSubscribe={handleSubscribe}
+          subscribing={subscribing}
         />
 
-        {/* Espacio final */}
-        <View style={{ height: 40 }} />
+        <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Loading overlay para suscripción */}
-      <LoadingOverlay
-        visible={subscribing}
-        text="Procesando suscripción..."
-      />
     </SafeAreaView>
   );
+};
+
+const styles = {
+  container: {
+    flex: 1,
+    backgroundColor: modernColors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+  },
+  loadingEmoji: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  loadingText: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    color: modernColors.gray600,
+    textAlign: 'center' as const,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  bottomSpacing: {
+    height: 40,
+  },
 };
 
 export default VIPScreen;

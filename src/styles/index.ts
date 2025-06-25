@@ -1,5 +1,5 @@
 // ============================================================================
-// src/styles/index.ts - SISTEMA FINAL PREMIUM CORREGIDO 🧹✨
+// src/styles/index.ts - SISTEMA PROFESIONAL PARA MUJERES 30-50 AÑOS 💼✨
 // ============================================================================
 
 import { Dimensions, Platform } from 'react-native';
@@ -10,65 +10,65 @@ const isTablet = SCREEN_WIDTH > 768;
 const isIPhoneX = SCREEN_HEIGHT >= 812 && Platform.OS === 'ios';
 
 // ============================================================================
-// 🎨 PALETA DE COLORES PREMIUM
+// 🎨 PALETA PROFESIONAL Y ELEGANTE
 // ============================================================================
 export const colors = {
-  // Primarios
-  primary: "#2C2C54",
-  accent: "#E8B4CB", 
-  secondary: "#FFF8F0",
+  // Primarios - Profesionales y confiables
+  primary: "#2D3748",      // Azul gris profesional (menos agresivo que negro)
+  accent: "#D69E2E",       // Dorado sofisticado (confianza y estatus)
+  secondary: "#F7FAFC",    // Gris muy claro (limpieza y claridad)
   
-  // Backgrounds
-  background: "#FDFCF8",
-  backgroundWarm: "#FFF5F0",
-  surface: "#FFFFFF",
-  surfaceElevated: "#FFFFFF",
+  // Backgrounds - Cálidos y acogedores
+  background: "#FEFEFE",      // Blanco puro pero cálido
+  backgroundWarm: "#FDF8F4",  // Beige muy sutil (relajante)
+  surface: "#FFFFFF",         // Blanco limpio
+  surfaceElevated: "#FFFFFF", // Consistencia
   
-  // Textos
-  textPrimary: "#1A1A1A",
-  textSecondary: "#6B6B6B",
-  textDisabled: "#D1D5DB",
-  textPlaceholder: "#9CA3AF",
+  // Textos - Legibles y profesionales
+  textPrimary: "#2D3748",     // Gris carbón (menos cansador que negro)
+  textSecondary: "#4A5568",   // Gris medio (jerarquía clara)
+  textDisabled: "#A0AEC0",    // Gris claro
+  textPlaceholder: "#9CA3AF", // Gris placeholder
   
-  // Estados
-  error: "#EF4444",
-  success: "#10B981",
-  warning: "#F59E0B",
-  info: "#3B82F6",
+  // Estados - Claros y reconocibles
+  error: "#E53E3E",      // Rojo elegante (no agresivo)
+  success: "#38A169",    // Verde natural (crecimiento)
+  warning: "#D69E2E",    // Dorado (coherente con accent)
+  info: "#3182CE",       // Azul confiable
   
-  // Grises
-  gray50: "#FAFAFA",
-  gray100: "#F5F5F5",
-  gray200: "#E5E5E5",
-  gray300: "#D4D4D4",
-  gray400: "#A3A3A3",
-  gray500: "#737373",
-  gray600: "#525252",
-  gray700: "#404040",
-  gray800: "#262626",
-  gray900: "#171717",
+  // Grises profesionales - Amplia gama para jerarquía
+  gray50: "#F9FAFB",
+  gray100: "#F3F4F6",
+  gray200: "#E5E7EB",
+  gray300: "#D1D5DB",
+  gray400: "#9CA3AF",
+  gray500: "#6B7280",
+  gray600: "#4B5563",
+  gray700: "#374151",
+  gray800: "#1F2937",
+  gray900: "#111827",
   
-  // Premium
-  vip: "#D4AF37",
-  premium: "#8B5CF6",
-  beauty: "#E8B4CB",
-  wellness: "#9FD8CB",
+  // Premium - Sofisticados y aspiracionales
+  vip: "#B7791F",        // Dorado profundo (lujo accesible)
+  premium: "#6B46C1",    // Púrpura elegante (exclusividad)
+  beauty: "#EC4899",     // Rosa vibrante pero sofisticado
+  wellness: "#059669",   // Verde wellness (salud y bienestar)
   
-  // Utilidad
+  // Utilidad - Funcionales
   shadow: "#000000",
   border: "#E5E7EB",
   borderLight: "#F3F4F6",
   borderMedium: "#D1D5DB",
   borderDark: "#9CA3AF",
   
-  // Transparencias
-  overlay: "rgba(0, 0, 0, 0.5)",
-  glass: "rgba(255, 255, 255, 0.25)",
-  shimmer: "rgba(255, 255, 255, 0.4)",
+  // Transparencias - Sutiles
+  overlay: "rgba(0, 0, 0, 0.4)",      // Menos agresivo
+  glass: "rgba(255, 255, 255, 0.85)",  // Más opaco para legibilidad
+  shimmer: "rgba(255, 255, 255, 0.6)", // Efecto sutil
 } as const;
 
 // ============================================================================
-// 🔤 TIPOGRAFÍA MODERNA
+// 🔤 TIPOGRAFÍA OPTIMIZADA PARA LEGIBILIDAD
 // ============================================================================
 export const typography = {
   families: {
@@ -78,95 +78,97 @@ export const typography = {
     mono: Platform.OS === 'ios' ? 'SF Mono' : 'Roboto Mono',
   },
   
+  // Tamaños optimizados para 30-50 años (ligeramente más grandes)
   sizes: {
-    xs: isSmallDevice ? 11 : 12,
-    sm: isSmallDevice ? 13 : 14,
-    base: isSmallDevice ? 15 : 16,
-    lg: isSmallDevice ? 17 : 18,
-    xl: isSmallDevice ? 19 : 20,
-    xxl: isSmallDevice ? 23 : 24,
-    title: isSmallDevice ? 27 : 28,
-    display: isSmallDevice ? 35 : 36,
-    hero: isSmallDevice ? 41 : 42,
+    xs: isSmallDevice ? 12 : 13,    // Incrementado para legibilidad
+    sm: isSmallDevice ? 14 : 15,    // Incrementado
+    base: isSmallDevice ? 16 : 17,  // Base más grande
+    lg: isSmallDevice ? 18 : 19,    // Incrementado
+    xl: isSmallDevice ? 20 : 22,    // Incrementado
+    xxl: isSmallDevice ? 24 : 26,   // Incrementado
+    title: isSmallDevice ? 28 : 30, // Incrementado
+    display: isSmallDevice ? 32 : 36, // Más conservador
+    hero: isSmallDevice ? 38 : 42,  // Más conservador
   },
   
   weights: {
     light: '300',
     regular: '400',
-    medium: '500',
-    semiBold: '600',
-    bold: '700',
-    extraBold: '800',
-    black: '900',
+    medium: '500',    // Peso estándar para profesionales
+    semiBold: '600',  // Para títulos importantes
+    bold: '700',      // Uso limitado
+    extraBold: '800', // Uso muy limitado
+    black: '900',     // Uso excepcional
   },
   
+  // Line heights optimizados para lectura cómoda
   lineHeights: {
-    tight: 1.2,
-    snug: 1.3,
-    normal: 1.4,
-    relaxed: 1.5,
-    loose: 1.6,
-    spacious: 1.8,
+    tight: 1.3,      // Incrementado para mejor legibilidad
+    snug: 1.4,       // Incrementado
+    normal: 1.5,     // Estándar cómodo
+    relaxed: 1.6,    // Para textos largos
+    loose: 1.7,      // Para accesibilidad
+    spacious: 1.8,   // Para contenido premium
   },
   
   letterSpacing: {
-    tighter: -0.8,
-    tight: -0.4,
+    tighter: -0.4,   // Menos agresivo
+    tight: -0.2,     // Menos agresivo
     normal: 0,
-    wide: 0.4,
-    wider: 0.8,
-    widest: 1.2,
+    wide: 0.3,       // Más sutil
+    wider: 0.6,      // Más sutil
+    widest: 1.0,     // Más sutil
   },
 } as const;
 
 // ============================================================================
-// 📏 ESPACIADO PREMIUM
+// 📏 ESPACIADO PROFESIONAL Y GENEROSO
 // ============================================================================
 export const spacing = {
-  // Base
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  massive: 48, // ✅ AÑADIDO
+  // Base - Más generoso para comodidad
+  xs: 6,      // Incrementado
+  sm: 10,     // Incrementado
+  md: 14,     // Incrementado
+  lg: 18,     // Incrementado
+  xl: 24,     // Incrementado
+  xxl: 30,    // Incrementado
+  xxxl: 40,   // Incrementado
+  massive: 56, // Para separaciones importantes
   
-  // Layouts
+  // Layouts - Espaciados cómodos
   layout: {
-    page: isTablet ? 32 : 20,
-    section: isTablet ? 28 : 18,
-    container: isTablet ? 24 : 16,
-    element: isTablet ? 16 : 12,
+    page: isTablet ? 40 : 24,       // Más generoso
+    section: isTablet ? 32 : 20,    // Más generoso
+    container: isTablet ? 28 : 18,  // Más generoso
+    element: isTablet ? 20 : 14,    // Más generoso
   },
   
-  // Componentes
+  // Componentes - Dimensiones cómodas
   component: {
-    radiusXS: 4,
-    radiusSM: 6,
-    radiusMD: 8,
-    radiusLG: 12,
-    radiusXL: 16,
-    radiusXXL: 20,
+    radiusXS: 6,     // Incrementado para suavidad
+    radiusSM: 8,     // Incrementado
+    radiusMD: 10,    // Incrementado
+    radiusLG: 14,    // Incrementado
+    radiusXL: 18,    // Incrementado
+    radiusXXL: 24,   // Incrementado
     radiusRound: 9999,
-    iconSM: 16,
-    iconMD: 20,
-    iconLG: 24,
-    iconXL: 32,
+    iconSM: 18,      // Incrementado para visibilidad
+    iconMD: 22,      // Incrementado
+    iconLG: 26,      // Incrementado
+    iconXL: 34,      // Incrementado
   },
   
-  // Estética
+  // Estética - Espaciados cómodos
   aesthetic: {
-    cardSpacing: 16,
-    itemSpacing: 12,
-    sectionPadding: 24,
-    buttonPadding: 16,
+    cardSpacing: 20,      // Más generoso
+    itemSpacing: 16,      // Más generoso
+    sectionPadding: 28,   // Más generoso
+    buttonPadding: 18,    // Más generoso para toque fácil
   },
 } as const;
 
 // ============================================================================
-// 🌟 SOMBRAS PREMIUM COMPLETAS
+// 🌟 SOMBRAS ELEGANTES Y SUTILES
 // ============================================================================
 export const shadows = {
   none: {
@@ -177,67 +179,68 @@ export const shadows = {
     elevation: 0,
   },
   
-  // ✅ AÑADIDAS LAS PROPIEDADES FALTANTES
+  // Sombras sutiles para elegancia
   sm: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,    // Más sutil
+    shadowRadius: 3,
     elevation: 1,
   },
   
   soft: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,    // Más sutil
+    shadowRadius: 5,
     elevation: 2,
   },
   
   md: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.10,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,    // Más sutil
+    shadowRadius: 8,
     elevation: 3,
   },
   
   medium: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,    // Elegante
+    shadowRadius: 10,
     elevation: 4,
   },
   
   lg: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,    // Profesional
+    shadowRadius: 12,
     elevation: 5,
   },
   
   strong: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,    // Para elementos importantes
     shadowRadius: 16,
     elevation: 8,
   },
   
   xl: {
     shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.20,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.20,    // Para modales
     shadowRadius: 20,
     elevation: 10,
   },
   
+  // Sombras de color elegantes
   premium: {
     shadowColor: colors.vip,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.20,
+    shadowOpacity: 0.15,    // Más sutil
     shadowRadius: 12,
     elevation: 6,
   },
@@ -245,7 +248,7 @@ export const shadows = {
   beauty: {
     shadowColor: colors.beauty,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,    // Más sutil
     shadowRadius: 8,
     elevation: 4,
   },
@@ -253,31 +256,30 @@ export const shadows = {
   glow: {
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.25,    // Más sutil
+    shadowRadius: 10,
+    elevation: 6,
   },
   
-  // ✅ AÑADIDO COLORED SHADOWS
   colored: {
     accent: {
       shadowColor: colors.accent,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.20,
       shadowRadius: 8,
       elevation: 4,
     },
     vip: {
       shadowColor: colors.vip,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.20,
       shadowRadius: 8,
       elevation: 4,
     },
     premium: {
       shadowColor: colors.premium,
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.20,
       shadowRadius: 8,
       elevation: 4,
     },
@@ -285,42 +287,84 @@ export const shadows = {
 } as const;
 
 // ============================================================================
-// 🎭 GRADIENTES PREMIUM
+// 🎭 GRADIENTES SOFISTICADOS
 // ============================================================================
 export const gradients = {
-  signature: [colors.vip, '#E8956B', '#D6845A'],
-  sunset: ['#FFE5CC', '#FFD6AA', '#FFC688'],
-  pearl: ['#FFFFFF', '#FEF7F0', '#F5F5F4'],
-  roseGold: ['#F9C09A', '#E8956B', '#C4734A'],
-  spa: ['#F0F9FF', '#E0F2FE', '#BAE6FD'],
-  beauty: [colors.beauty, '#F8BBD9', '#E879F9'],
-  vip: [colors.vip, '#F6CC6B', '#E6B85C'],
-  warm: ['#FFF9F6', '#FEF7F0', '#FDF2E9'],
-  cool: ['#F8FAFC', '#F1F5F9', '#E2E8F0'],
+  // Gradientes profesionales y elegantes
+  signature: ['#B7791F', '#D69E2E', '#ECC94B'], // Dorados elegantes
+  sunset: ['#FFF5E6', '#FED7AA', '#FDB366'],    // Cálidos suaves
+  pearl: ['#FFFFFF', '#F9FAFB', '#F3F4F6'],     // Neutros elegantes
+  roseGold: ['#F7E6D3', '#E6B897', '#D4A574'], // Rosa dorado sutil
+  spa: ['#F0FDF4', '#DCFCE7', '#BBF7D0'],       // Verde wellness
+  beauty: ['#FDF2F8', '#FCE7F3', '#F9A8D4'],   // Rosa elegante
+  vip: ['#FFFBEB', '#FEF3C7', '#FDE68A'],      // Dorado premium
+  warm: ['#FFFAF0', '#FEF5E7', '#FED7AA'],     // Cálido acogedor
+  cool: ['#F8FAFC', '#F1F5F9', '#E2E8F0'],     // Frío profesional
+  
+  // Nuevos gradientes profesionales
+  executive: ['#1A202C', '#2D3748', '#4A5568'], // Grises ejecutivos
+  wellness: ['#F0FDF4', '#ECFDF5', '#D1FAE5'], // Verde bienestar
+  trust: ['#EBF8FF', '#BEE3F8', '#90CDF4'],    // Azul confianza
+  elegance: ['#FAF5FF', '#E9D8FD', '#D6BCFA'], // Púrpura elegante
 } as const;
 
 // ============================================================================
-// ⚡ ANIMACIONES PREMIUM
+// ⚡ ANIMACIONES PROFESIONALES
 // ============================================================================
 export const animations = {
+  // Duraciones más conservadoras
   duration: {
-    instant: 100,
-    fast: 200,
-    normal: 300,
-    slow: 500,
-    slower: 700,
-    epic: 1000,
+    instant: 150,    // Incrementado para suavidad
+    fast: 250,       // Incrementado
+    normal: 350,     // Incrementado
+    slow: 500,       // Mantenido
+    slower: 650,     // Incrementado
+    epic: 1000,      // Mantenido
   },
   
+  // Easing más suaves
   easing: {
-    ios: { tension: 300, friction: 20 },
-    material: { tension: 280, friction: 22 },
-    gentle: { tension: 250, friction: 25 },
-    bouncy: { tension: 400, friction: 15 },
-    smooth: { tension: 200, friction: 30 },
-    entrance: { tension: 300, friction: 18 },
-    exit: { tension: 250, friction: 25 },
-    interaction: { tension: 400, friction: 20 },
+    ios: { tension: 280, friction: 25 },      // Más suave
+    material: { tension: 260, friction: 28 }, // Más suave
+    gentle: { tension: 220, friction: 30 },   // Más suave
+    bouncy: { tension: 350, friction: 18 },   // Menos agresivo
+    smooth: { tension: 180, friction: 32 },   // Muy suave
+    entrance: { tension: 280, friction: 22 }, // Suave
+    exit: { tension: 240, friction: 28 },     // Suave
+    interaction: { tension: 320, friction: 24 }, // Responsivo pero suave
+  },
+} as const;
+
+// ============================================================================
+// 🎯 ACCESIBILIDAD MEJORADA
+// ============================================================================
+export const accessibility = {
+  // Ratios de contraste optimizados
+  contrastRatios: {
+    normal: 4.5,     // WCAG AA
+    large: 3.0,      // WCAG AA para texto grande
+    enhanced: 7.0,   // WCAG AAA
+  },
+  
+  // Targets de toque generosos
+  touchTargets: {
+    minimum: 48,     // Incrementado para comodidad
+    comfortable: 52, // Incrementado
+    premium: 60,     // Incrementado para facilidad
+  },
+  
+  // Configuraciones para accesibilidad
+  screenReader: {
+    reducedMotion: true,
+    announcements: true,
+    landmarks: true,
+    semanticMarkup: true,
+  },
+  
+  // Espaciado mínimo entre elementos
+  minSpacing: {
+    betweenElements: 12, // Mínimo espacio entre elementos
+    betweenSections: 24, // Mínimo espacio entre secciones
   },
 } as const;
 
@@ -330,7 +374,9 @@ export const animations = {
 export const modernColors = {
   // Principales
   primary: colors.primary,
+  primaryDark: colors.gray800,
   accent: colors.accent,
+  accentLight: colors.warning,
   secondary: colors.secondary,
   
   // Backgrounds
@@ -378,6 +424,8 @@ export const modernColors = {
   // Utilidad
   shadow: colors.shadow,
   charcoal: colors.textPrimary,
+  white: '#FFFFFF',
+  black: colors.gray900,
   
   // Estados modernos
   successModern: colors.success,
@@ -388,8 +436,8 @@ export const modernColors = {
   // Transparencias
   glass: {
     white: colors.glass,
-    warm: 'rgba(255, 249, 246, 0.80)',
-    dark: 'rgba(28, 25, 23, 0.80)',
+    warm: 'rgba(255, 249, 246, 0.85)',
+    dark: 'rgba(28, 25, 23, 0.85)',
     shimmer: colors.shimmer,
   },
 } as const;
@@ -407,23 +455,19 @@ export const modernSpacing = {
   xl: spacing.xxl,
   xxl: spacing.xxxl,
   xxxl: spacing.massive,
-  massive: spacing.massive, // ✅ AÑADIDO
+  massive: spacing.massive,
   
   // Layout específico
   content: spacing.layout,
   
   // Touch targets
-  touch: {
-    minimum: 44,
-    comfortable: 48,
-    premium: 56,
-  },
+  touch: accessibility.touchTargets,
   
   // Márgenes
   margins: {
-    screen: isSmallDevice ? 16 : isTablet ? 32 : 20,
-    card: isSmallDevice ? 12 : isTablet ? 20 : 16,
-    element: isSmallDevice ? 8 : isTablet ? 12 : 10,
+    screen: isSmallDevice ? 20 : isTablet ? 40 : 24,
+    card: isSmallDevice ? 16 : isTablet ? 24 : 20,
+    element: isSmallDevice ? 12 : isTablet ? 16 : 14,
   },
   
   // Aesthetic backwards
@@ -455,7 +499,6 @@ export const modernTypography = {
     black: typography.weights.black,
   },
   
-  // ✅ AÑADIDAS LAS PROPIEDADES FALTANTES
   fontWeightModern: {
     light: typography.weights.light,
     regular: typography.weights.regular,
@@ -469,14 +512,10 @@ export const modernTypography = {
   
   // Line heights
   lineHeight: typography.lineHeights,
-  
-  // ✅ AÑADIDO lineHeightModern
   lineHeightModern: typography.lineHeights,
   
   // Letter spacing
   letterSpacing: typography.letterSpacing,
-  
-  // ✅ AÑADIDO letterSpacingModern
   letterSpacingModern: typography.letterSpacing,
 } as const;
 
@@ -486,81 +525,26 @@ export const modernTypography = {
 export const modernShadows = {
   subtle: shadows.soft,
   soft: shadows.soft,
-  sm: shadows.sm, // ✅ AÑADIDO
-  md: shadows.md, // ✅ AÑADIDO
+  sm: shadows.sm,
+  small: shadows.sm,
+  md: shadows.md,
   medium: shadows.medium,
-  lg: shadows.lg, // ✅ AÑADIDO
+  lg: shadows.lg,
+  large: shadows.lg,
   strong: shadows.strong,
-  xl: shadows.xl, // ✅ AÑADIDO
+  xl: shadows.xl,
   premium: shadows.premium,
   inset: shadows.soft,
   glow: shadows.glow,
-  colored: shadows.colored, // ✅ AÑADIDO
+  colored: shadows.colored,
 } as const;
 
 // ============================================================================
-// 🔄 MODERNRADIUS
-// ============================================================================
-export const modernRadius = {
-  none: 0,
-  xs: spacing.component.radiusXS,
-  sm: spacing.component.radiusSM,
-  md: spacing.component.radiusMD,
-  lg: spacing.component.radiusLG,
-  xl: spacing.component.radiusXL,
-  xxl: spacing.component.radiusXXL,
-  xxxl: 24,
-  pill: spacing.component.radiusRound,
-  circular: spacing.component.radiusRound,
-  
-  // Contextuales
-  button: spacing.component.radiusMD,
-  card: spacing.component.radiusLG,
-  modal: spacing.component.radiusXL,
-  image: spacing.component.radiusSM,
-  
-  // Device responsive
-  device: {
-    small: isSmallDevice ? 8 : 12,
-    medium: isSmallDevice ? 12 : 16,
-    large: isSmallDevice ? 16 : 20,
-  },
-} as const;
-
-// ============================================================================
-// ⚡ MODERNANIMATIONS
-// ============================================================================
-export const modernAnimations = {
-  duration: animations.duration,
-  easing: animations.easing,
-  
-  // Presets
-  presets: {
-    fadeIn: {
-      duration: animations.duration.normal,
-      easing: animations.easing.entrance,
-    },
-    slideUp: {
-      duration: animations.duration.slow,
-      easing: animations.easing.material,
-    },
-    scale: {
-      duration: animations.duration.fast,
-      easing: animations.easing.bouncy,
-    },
-    bounce: {
-      duration: animations.duration.slower,
-      easing: animations.easing.bouncy,
-    },
-  },
-} as const;
-
-// ============================================================================
-// 🛠️ UTILIDADES PREMIUM
+// 🛠️ UTILIDADES PROFESIONALES
 // ============================================================================
 export const modernUtils = {
   // Crear sombra personalizada
-  createShadow: (color: string = colors.shadow, opacity: number = 0.15, radius: number = 8) => ({
+  createShadow: (color: string = colors.shadow, opacity: number = 0.12, radius: number = 8) => ({
     shadowColor: color,
     shadowOffset: { width: 0, height: radius / 2 },
     shadowOpacity: opacity,
@@ -568,9 +552,9 @@ export const modernUtils = {
     elevation: Math.round(radius / 2),
   }),
 
-  // Font responsive
-  responsiveFont: (base: number, factor: number = 1.2) => ({
-    fontSize: isSmallDevice ? base : isTablet ? base * factor * 1.1 : base * factor,
+  // Font responsive optimizado para target
+  responsiveFont: (base: number, factor: number = 1.1) => ({
+    fontSize: isSmallDevice ? base * 0.95 : isTablet ? base * factor * 1.15 : base * factor,
   }),
 
   // Safe area padding
@@ -579,12 +563,12 @@ export const modernUtils = {
     bottom: isIPhoneX ? 34 : 0,
   },
 
-  // Glassmorphism effect
+  // Glassmorphism más sutil
   glassmorphism: (intensity: 'light' | 'medium' | 'strong' = 'medium') => {
     const intensityMap = {
-      light: { opacity: 0.1, blur: 10 },
-      medium: { opacity: 0.25, blur: 20 },
-      strong: { opacity: 0.4, blur: 30 },
+      light: { opacity: 0.08, blur: 8 },
+      medium: { opacity: 0.15, blur: 12 },
+      strong: { opacity: 0.25, blur: 16 },
     };
     
     const config = intensityMap[intensity];
@@ -592,7 +576,7 @@ export const modernUtils = {
     return {
       backgroundColor: `rgba(255, 255, 255, ${config.opacity})`,
       borderWidth: 1,
-      borderColor: 'rgba(255, 255, 255, 0.18)',
+      borderColor: 'rgba(255, 255, 255, 0.12)',
     };
   },
 
@@ -602,40 +586,41 @@ export const modernUtils = {
     const alpha = Math.round(opacity * 255).toString(16).padStart(2, '0');
     return `#${hex}${alpha}`;
   },
-} as const;
 
-// ============================================================================
-// 📱 BREAKPOINTS
-// ============================================================================
-export const modernBreakpoints = {
-  sm: 375,  // iPhone SE
-  md: 414,  // iPhone Pro
-  lg: 768,  // iPad mini
-  xl: 1024, // iPad
-  xxl: 1280, // iPad Pro
-} as const;
-
-// ============================================================================
-// 🎯 ACCESIBILIDAD
-// ============================================================================
-export const modernA11y = {
-  contrastRatios: {
-    normal: 4.5,
-    large: 3.0,
-    enhanced: 7.0,
+  // Estilo profesional para botones
+  professionalButton: (variant: 'primary' | 'secondary' | 'accent' = 'primary') => {
+    const variantMap = {
+      primary: {
+        backgroundColor: colors.primary,
+        color: '#FFFFFF',
+        borderColor: colors.primary,
+      },
+      secondary: {
+        backgroundColor: 'transparent',
+        color: colors.primary,
+        borderColor: colors.primary,
+      },
+      accent: {
+        backgroundColor: colors.accent,
+        color: '#FFFFFF',
+        borderColor: colors.accent,
+      },
+    };
+    
+    return {
+      ...variantMap[variant],
+      borderWidth: 1,
+      borderRadius: spacing.component.radiusMD,
+      paddingVertical: spacing.aesthetic.buttonPadding,
+      paddingHorizontal: spacing.aesthetic.buttonPadding * 1.5,
+      minHeight: accessibility.touchTargets.comfortable,
+      ...shadows.soft,
+    };
   },
-  
-  touchTargets: modernSpacing.touch,
-  
-  screenReader: {
-    reducedMotion: true,
-    announcements: true,
-    landmarks: true,
-  },
 } as const;
 
 // ============================================================================
-// 🎨 ESTILOS GLOBALES
+// 🎨 ESTILOS GLOBALES PROFESIONALES
 // ============================================================================
 export const globalStyles = {
   container: {
@@ -645,45 +630,33 @@ export const globalStyles = {
   
   card: {
     backgroundColor: modernColors.surface,
-    borderRadius: modernRadius.card,
-    padding: modernSpacing.aesthetic.cardSpacing,
-    shadowColor: modernShadows.soft.shadowColor,
-    shadowOffset: modernShadows.soft.shadowOffset,
-    shadowOpacity: modernShadows.soft.shadowOpacity,
-    shadowRadius: modernShadows.soft.shadowRadius,
-    elevation: modernShadows.soft.elevation,
+    borderRadius: spacing.component.radiusLG,
+    padding: spacing.aesthetic.cardSpacing,
+    ...shadows.soft,
   },
   
   button: {
     backgroundColor: modernColors.primary,
-    paddingVertical: modernSpacing.aesthetic.buttonPadding,
-    paddingHorizontal: modernSpacing.aesthetic.buttonPadding * 1.5,
-    borderRadius: modernRadius.button,
+    paddingVertical: spacing.aesthetic.buttonPadding,
+    paddingHorizontal: spacing.aesthetic.buttonPadding * 1.5,
+    borderRadius: spacing.component.radiusMD,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    minHeight: modernSpacing.touch.minimum,
-    shadowColor: modernShadows.soft.shadowColor,
-    shadowOffset: modernShadows.soft.shadowOffset,
-    shadowOpacity: modernShadows.soft.shadowOpacity,
-    shadowRadius: modernShadows.soft.shadowRadius,
-    elevation: modernShadows.soft.elevation,
+    minHeight: accessibility.touchTargets.comfortable,
+    ...shadows.soft,
   },
   
   input: {
     borderWidth: 1,
     borderColor: modernColors.border,
-    borderRadius: modernRadius.md,
-    paddingHorizontal: modernSpacing.aesthetic.itemSpacing,
-    paddingVertical: modernSpacing.aesthetic.itemSpacing,
-    fontSize: modernTypography.fontSizeModern.base,
+    borderRadius: spacing.component.radiusMD,
+    paddingHorizontal: spacing.aesthetic.itemSpacing,
+    paddingVertical: spacing.aesthetic.itemSpacing,
+    fontSize: typography.sizes.base,
     color: modernColors.text,
     backgroundColor: modernColors.surface,
-    minHeight: modernSpacing.touch.minimum,
-    shadowColor: modernShadows.subtle.shadowColor,
-    shadowOffset: modernShadows.subtle.shadowOffset,
-    shadowOpacity: modernShadows.subtle.shadowOpacity,
-    shadowRadius: modernShadows.subtle.shadowRadius,
-    elevation: modernShadows.subtle.elevation,
+    minHeight: accessibility.touchTargets.comfortable,
+    ...shadows.subtle,
   },
   
   // Layout helpers
@@ -703,58 +676,36 @@ export const globalStyles = {
   flex1: { 
     flex: 1 
   },
-} as const;
-
-// ============================================================================
-// 🎯 HELPERS Y VARIANTES
-// ============================================================================
-export const helpers = {
-  createShadow: modernUtils.createShadow,
-  withOpacity: modernUtils.withOpacity,
-  responsiveSize: modernUtils.responsiveFont,
   
-  getVipGradient: () => gradients.vip,
-  getBeautyGradient: () => gradients.beauty,
-  getSignatureGradient: () => gradients.signature,
-} as const;
-
-export const variants = {
-  login: {
-    background: modernColors.backgroundWarm,
-    card: modernColors.surface,
-    accent: modernColors.accent,
+  // Nuevos estilos profesionales
+  professionalTitle: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.semiBold,
+    color: colors.textPrimary,
+    lineHeight: typography.lineHeights.snug * typography.sizes.xl,
+    marginBottom: spacing.md,
   },
   
-  dashboard: {
-    primary: modernColors.primary,
-    cards: modernColors.surface,
-    vip: modernColors.vip,
+  professionalBody: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.regular,
+    color: colors.textSecondary,
+    lineHeight: typography.lineHeights.relaxed * typography.sizes.base,
   },
   
-  vip: {
-    background: modernColors.vip,
-    accent: modernColors.vip,
-    text: modernColors.text,
-  },
-  
-  profile: {
-    background: modernColors.background,
-    sections: modernColors.surface,
-    accent: modernColors.accent,
+  professionalCard: {
+    backgroundColor: modernColors.surface,
+    borderRadius: spacing.component.radiusLG,
+    padding: spacing.aesthetic.cardSpacing,
+    marginBottom: spacing.aesthetic.itemSpacing,
+    borderWidth: 1,
+    borderColor: modernColors.borderLight,
+    ...shadows.soft,
   },
 } as const;
 
-export const getVIPStyles = (isVIP: boolean) => ({
-  backgroundColor: isVIP ? modernColors.vip + '10' : modernColors.surface,
-  borderColor: isVIP ? modernColors.vip + '30' : modernColors.border,
-  borderWidth: isVIP ? 1 : 0,
-});
-
-export const getResponsiveStyle = (baseSize: number) => 
-  isSmallDevice ? baseSize * 0.9 : isTablet ? baseSize * 1.2 : baseSize;
-
 // ============================================================================
-// 🎯 THEME PRINCIPAL
+// 🎯 THEME PROFESIONAL COMPLETO
 // ============================================================================
 export const theme = {
   colors,
@@ -763,52 +714,31 @@ export const theme = {
   shadows,
   gradients,
   animations,
+  accessibility,
 } as const;
 
-// ============================================================================
-// 🌟 THEME MODERNO COMPLETO
-// ============================================================================
 export const modernTheme = {
   colors: modernColors,
   spacing: modernSpacing,
   typography: modernTypography,
   shadows: modernShadows,
-  radius: modernRadius,
-  animations: modernAnimations,
   utils: modernUtils,
-  breakpoints: modernBreakpoints,
-  a11y: modernA11y,
   gradients,
+  accessibility,
 } as const;
 
 // ============================================================================
-// 🔧 VERIFICACIÓN FINAL CORREGIDA
+// 🔧 VERIFICACIÓN PROFESIONAL
 // ============================================================================
 if (__DEV__) {
-  console.log('✨ Sistema de estilos cargado correctamente');
-  console.log('✅ modernColors.premium:', modernColors.premium);
-  console.log('✅ modernColors.vip:', modernColors.vip);
-  console.log('✅ modernSpacing disponible:', !!modernSpacing);
-  console.log('✅ modernTypography disponible:', !!modernTypography);
-  console.log('✅ modernShadows.md disponible:', !!modernShadows.md);
-  console.log('✅ modernShadows.lg disponible:', !!modernShadows.lg);
-  console.log('✅ Todos los sistemas listos');
+  console.log('✨ Sistema profesional cargado para mujeres 30-50 años');
+  console.log('✅ Legibilidad optimizada:', typography.sizes.base, 'px base');
+  console.log('✅ Espaciado cómodo:', spacing.aesthetic.cardSpacing, 'px cards');
+  console.log('✅ Touch targets:', accessibility.touchTargets.comfortable, 'px');
+  console.log('✅ Colores profesionales cargados');
 }
-
-// ============================================================================
-// 🔷 TYPES
-// ============================================================================
-export type Theme = typeof theme;
-export type ModernTheme = typeof modernTheme;
-export type ModernColors = typeof modernColors;
-export type ModernSpacing = typeof modernSpacing;
-export type ModernTypography = typeof modernTypography;
-export type ModernShadows = typeof modernShadows;
-export type Gradients = typeof gradients;
 
 // ============================================================================
 // 📤 EXPORTS FINALES
 // ============================================================================
-
-// Export por defecto
 export default modernTheme;

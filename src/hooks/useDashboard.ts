@@ -1,12 +1,11 @@
 // ============================================================================
-// hooks/useDashboard.ts - VERSIÓN SIN ERRORES - LISTA PARA USAR
+// hooks/useDashboard.ts - HOOK ACTUALIZADO CON AUTO-REFRESH ✅
 // ============================================================================
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { Alert } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { setUser, updateUserVIPStatus, updateUserBeautyPoints } from '../store/slices/authSlice';
-import { dashboardAPI, treatmentAPI, api, handleApiError } from '../services/api';
+import { dashboardAPI, handleApiError } from '../services/api';
 
 export interface DashboardData {
   user: {
@@ -15,299 +14,242 @@ export interface DashboardData {
     vipStatus: boolean;
     beautyPoints: number;
   };
-  nextAppointment: {
+  nextAppointment?: {
     id: string;
     treatment: string;
     date: string;
     time: string;
     professional: string;
     clinic: string;
-    status: string;
-  } | null;
-  featuredTreatments: any[];
-  wellnessTip: {
+  };
+  featuredTreatments: Array<{
+    id: string;
+    name: string;
+    description: string;
+    duration: number;
+    price: number;
+    iconName: string;
+    emoji?: string;
+    isVipExclusive?: boolean;
+  }>;
+  wellnessTip?: {
     title: string;
     content: string;
     category: string;
     iconName: string;
-  } | null;
+  };
   stats: {
     totalSessions: number;
     beautyPoints: number;
     totalInvestment: number;
     vipStatus: boolean;
   };
-}
-
-export interface WellnessCheckIn {
-  mood: 'great' | 'good' | 'okay' | 'tired' | 'stressed';
-  energy: number;
-  skinFeeling: 'amazing' | 'good' | 'normal' | 'needs-care';
+  timestamp?: number; // ✅ NUEVO: Para control de refresh
 }
 
 export const useDashboard = (navigation: any) => {
-  const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const token = useSelector((state: RootState) => state.auth.token);
-  const isInitialized = useRef(false);
-
-  // Estados
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [wellnessCompleted, setWellnessCompleted] = useState(false);
-  const [selectedClinic, setSelectedClinic] = useState('Belleza Estética Centro');
   const [error, setError] = useState<string | null>(null);
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0); // ✅ NUEVO
 
-  // ============================================================================
-  // FUNCIONES DE API - VERSIÓN SIN ERRORES
-  // ============================================================================
+  // Obtener usuario del store
+  const user = useSelector((state: RootState) => state.auth.user);
+  
+  // Clínica seleccionada (en el futuro puede venir del store)
+  const [selectedClinic] = useState('Belleza Estética Premium');
+
+  // Función para obtener emoji basado en iconName
+  const getEmojiForTreatment = useCallback((iconName: string): string => {
+    const emojiMap: { [key: string]: string } = {
+      'sparkles': '✨',
+      'waves': '🌊',
+      'droplets': '💧',
+      'star': '⭐',
+      'heart': '💖',
+      'flower': '🌸',
+      'leaf': '🍃',
+      'crown': '👑',
+      'gem': '💎',
+      'fire': '🔥',
+    };
+    
+    return emojiMap[iconName] || '💆‍♀️';
+  }, []);
+
+  // ✅ FUNCIÓN DE CARGA MEJORADA CON TIMESTAMP
   const loadDashboardData = useCallback(async (isRefresh = false) => {
     try {
-      console.log('🔄 Loading dashboard data...', { isRefresh });
-      
-      if (!isRefresh) {
-        setLoading(true);
-        setError(null);
-      } else {
+      if (isRefresh) {
         setRefreshing(true);
+      } else {
+        setLoading(true);
       }
-      
-      // Verificar autenticación primero
-      const isAuth = await api.isAuthenticated();
-      if (!isAuth) {
-        throw new Error('Usuario no autenticado');
-      }
+      setError(null);
 
+      console.log('📊 Loading dashboard data...');
       const response = await dashboardAPI.getDashboard();
-      console.log('✅ Dashboard response:', response.success);
       
       if (response.success && response.data) {
-        setDashboardData(response.data);
-        setError(null);
+        // Transformar los datos del backend al formato esperado por el frontend
+        const data = response.data;
+        const currentTimestamp = Date.now();
         
-        // ✅ SOLUCIÓN SIN ERRORES - Actualizar datos del usuario
-        if (response.data.user && user) {
-          // Usar acciones existentes que SÍ funcionan
-          dispatch(updateUserVIPStatus(response.data.user.vipStatus));
-          dispatch(updateUserBeautyPoints(response.data.user.beautyPoints));
-          
-          // Opcional: actualizar usuario completo si es necesario
-          const updatedUser = {
-            ...user,
-            firstName: response.data.user.firstName,
-            lastName: response.data.user.lastName,
-            name: `${response.data.user.firstName} ${response.data.user.lastName}`,
-            vipStatus: response.data.user.vipStatus,
-            beautyPoints: response.data.user.beautyPoints
-          };
-          dispatch(setUser(updatedUser));
-        }
+        const transformedData: DashboardData = {
+          user: {
+            firstName: data.user.firstName,
+            lastName: data.user.lastName,
+            vipStatus: data.user.vipStatus,
+            beautyPoints: data.user.beautyPoints,
+          },
+          nextAppointment: data.nextAppointment ? {
+            id: data.nextAppointment.id,
+            treatment: data.nextAppointment.treatment,
+            date: data.nextAppointment.date,
+            time: data.nextAppointment.time,
+            professional: data.nextAppointment.professional,
+            clinic: data.nextAppointment.clinic,
+          } : undefined,
+          featuredTreatments: data.featuredTreatments.map((treatment: any) => ({
+            id: treatment.id,
+            name: treatment.name,
+            description: treatment.description,
+            duration: treatment.duration,
+            price: treatment.price,
+            iconName: treatment.iconName,
+            emoji: getEmojiForTreatment(treatment.iconName),
+            isVipExclusive: treatment.isVipExclusive || false,
+          })),
+          wellnessTip: data.wellnessTip ? {
+            title: data.wellnessTip.title,
+            content: data.wellnessTip.content,
+            category: data.wellnessTip.category,
+            iconName: data.wellnessTip.iconName,
+          } : undefined,
+          stats: data.stats,
+          timestamp: currentTimestamp, // ✅ NUEVO
+        };
+
+        setDashboardData(transformedData);
+        setLastRefreshTime(currentTimestamp); // ✅ NUEVO
+        console.log('✅ Dashboard data loaded successfully');
+        console.log('🔍 NextAppointment data:', transformedData.nextAppointment);
       } else {
-        throw new Error(response.error?.message || 'Respuesta inválida del servidor');
+        throw new Error('Invalid response format');
       }
-    } catch (error: any) {
-      console.error('❌ Error loading dashboard:', error);
-      const errorMessage = handleApiError(error, 'No se pudo cargar la información del dashboard');
+    } catch (err: any) {
+      console.error('❌ Error loading dashboard:', err);
+      const errorMessage = handleApiError(err, 'Error al cargar el dashboard');
       setError(errorMessage);
       
-      // Solo mostrar alert si no es refresh (evitar interrumpir UX)
       if (!isRefresh) {
         Alert.alert('Error', errorMessage);
       }
-      
-      // Si es error de auth, redirigir a login
-      if (error?.message?.includes('autenticado') || 
-          error?.message?.includes('401') ||
-          error?.message?.includes('Unauthorized')) {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
-      }
     } finally {
       setLoading(false);
-      setRefreshing(false); // ✅ SIEMPRE resetear refreshing
+      setRefreshing(false);
     }
-  }, [user, dispatch, navigation]);
+  }, [getEmojiForTreatment]);
 
-  const handleWellnessCheckIn = async (wellnessData: WellnessCheckIn) => {
-    try {
-      console.log('🌿 Wellness check-in:', wellnessData);
-      
-      // TODO: Implementar API endpoint real cuando esté listo
-      // const response = await api.request('/profile/wellness-checkin', {
-      //   method: 'POST',
-      //   body: JSON.stringify(wellnessData)
-      // });
-      
-      // Por ahora simular
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      setWellnessCompleted(true);
-      
-      // Simular ganancia de beauty points
-      if (user) {
-        dispatch(updateUserBeautyPoints((user.beautyPoints || 0) + 5));
-      }
-      
-      Alert.alert(
-        '¡Gracias! 💖',
-        'Tu check-in de bienestar ha sido registrado. ¡Ganaste 5 Beauty Points!',
-        [{ text: 'Continuar', style: 'default' }]
-      );
-      
-      // Refrescar data para sincronizar
-      loadDashboardData(true);
-      
-    } catch (error) {
-      console.error('❌ Error submitting wellness check-in:', error);
-      const errorMessage = handleApiError(error, 'No se pudo registrar tu check-in');
-      Alert.alert('Error', errorMessage);
-    }
-  };
+  // ✅ NUEVO: Función de refresh manual
+  const refreshDashboard = useCallback(() => {
+    console.log('🔄 Manual dashboard refresh triggered');
+    loadDashboardData(true);
+  }, [loadDashboardData]);
 
-  const handleTreatmentPress = useCallback((treatment: any) => {
-    console.log('💆‍♀️ Treatment pressed:', treatment.name);
-    
-    // Verificar si es VIP exclusive y usuario no es VIP
-    if (treatment.isVipExclusive && !user?.vipStatus) {
-      Alert.alert(
-        '✨ Tratamiento VIP',
-        'Este tratamiento es exclusivo para miembros VIP. ¿Te gustaría conocer más sobre la membresía?',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: 'Ver VIP', 
-            onPress: () => navigation.navigate('VIP')
-          }
-        ]
-      );
-      return;
-    }
-
-    // Navegar a detalles del tratamiento o booking
-    navigation.navigate('Appointments', { 
-      screen: 'BookAppointment',
-      params: {
-        treatmentId: treatment.id,
-        treatmentName: treatment.name 
+  // ✅ NUEVO: Auto-refresh inteligente en focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('📱 Dashboard screen focused');
+      
+      const now = Date.now();
+      const timeSinceLastRefresh = now - lastRefreshTime;
+      const REFRESH_THRESHOLD = 10000; // 10 segundos
+      
+      if (timeSinceLastRefresh > REFRESH_THRESHOLD || !dashboardData) {
+        console.log('🔄 Auto-refreshing dashboard (data is stale or missing)');
+        refreshDashboard();
+      } else {
+        console.log(`⏭️ Skipping refresh (last refresh: ${Math.round(timeSinceLastRefresh/1000)}s ago)`);
       }
     });
-  }, [user?.vipStatus, navigation]);
 
+    return unsubscribe;
+  }, [navigation, lastRefreshTime, dashboardData, refreshDashboard]);
+
+  // ✅ MEJORADO: Efecto inicial
+  useEffect(() => {
+    if (!dashboardData) {
+      loadDashboardData();
+    }
+  }, [loadDashboardData, dashboardData]);
+
+  // Handlers de navegación
   const handleNewAppointment = useCallback(() => {
-    console.log('📅 New appointment button pressed');
-    navigation.navigate('Appointments', { screen: 'BookAppointment' });
+    navigation.navigate('BookAppointment');
   }, [navigation]);
 
   const handleNextAppointmentPress = useCallback(() => {
     if (dashboardData?.nextAppointment) {
-      console.log('📅 Next appointment pressed:', dashboardData.nextAppointment.id);
-      navigation.navigate('Appointments', { 
-        screen: 'AppointmentDetails',
-        params: {
-          appointmentId: dashboardData.nextAppointment.id 
-        }
+      navigation.navigate('AppointmentDetails', {
+        appointmentId: dashboardData.nextAppointment.id
       });
     }
-  }, [dashboardData?.nextAppointment, navigation]);
+  }, [navigation, dashboardData]);
 
   const handleChangeClinic = useCallback(() => {
     Alert.alert(
       'Cambiar clínica',
-      'Esta función estará disponible próximamente. Por ahora trabajamos con nuestra clínica principal.',
+      'Esta función estará disponible próximamente',
       [{ text: 'Entendido', style: 'default' }]
     );
   }, []);
 
   const handleProfilePress = useCallback(() => {
-    console.log('👤 Profile button pressed');
     navigation.navigate('Profile');
   }, [navigation]);
 
   const handleBeautyPointsPress = useCallback(async () => {
     try {
-      console.log('💎 Beauty points pressed');
+      console.log('💎 Loading beauty points...');
       const response = await dashboardAPI.getBeautyPoints();
       
       if (response.success) {
-        navigation.navigate('Profile', { 
-          screen: 'BeautyPoints',
-          params: { pointsData: response.data }
-        });
+        navigation.navigate('BeautyPoints', { pointsData: response.data });
       } else {
-        throw new Error(response.error?.message || 'Error obteniendo beauty points');
+        throw new Error('Failed to load beauty points');
       }
-    } catch (error) {
-      console.error('❌ Error loading beauty points:', error);
-      const errorMessage = handleApiError(error, 'No se pudieron cargar los detalles de Beauty Points');
+    } catch (err: any) {
+      const errorMessage = handleApiError(err, 'No se pudieron cargar los Beauty Points');
       Alert.alert('Error', errorMessage);
     }
   }, [navigation]);
 
+  const handleTreatmentPress = useCallback((treatment: any) => {
+    navigation.navigate('TreatmentDetails', { 
+      treatmentId: treatment.id,
+      treatment 
+    });
+  }, [navigation]);
+
   const handleSeeAllTreatments = useCallback(() => {
-    console.log('💆‍♀️ See all treatments pressed');
     navigation.navigate('Treatments');
   }, [navigation]);
 
-  // ============================================================================
-  // EFFECTS - VERSIÓN OPTIMIZADA Y SIN ERRORES
-  // ============================================================================
-  
-  // Effect inicial - solo se ejecuta una vez
-  useEffect(() => {
-    const initializeHome = async () => {
-      try {
-        console.log('🚀 Initializing home screen...');
-        
-        const isAuth = await api.isAuthenticated();
-        if (!isAuth) {
-          console.log('❌ User not authenticated, redirecting to login');
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          });
-          return;
-        }
-        
-        await loadDashboardData();
-        isInitialized.current = true;
-        
-      } catch (error) {
-        console.error('❌ Error initializing home:', error);
-        const errorMessage = handleApiError(error, 'Error al inicializar la pantalla');
-        Alert.alert('Error', errorMessage);
-      }
-    };
-
-    if (!isInitialized.current) {
-      initializeHome();
-    }
-  }, []); // ✅ Solo dependencias estáticas
-
-  // Effect para refresh cuando vuelve a la pantalla
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      // Solo refrescar si ya está inicializado y hay data
-      if (isInitialized.current && dashboardData) {
-        console.log('🔄 Screen focused, refreshing data...');
-        loadDashboardData(true);
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation, loadDashboardData]); // ✅ loadDashboardData ya es memoizado
-
-  // Función de refresh para pull-to-refresh
+  // ✅ MEJORADO: Refresh con timestamp update
   const onRefresh = useCallback(() => {
-    console.log('🔄 Manual refresh triggered');
+    console.log('🔄 Pull-to-refresh triggered');
     loadDashboardData(true);
   }, [loadDashboardData]);
 
-  // ============================================================================
-  // UTILIDADES DE FORMATO
-  // ============================================================================
+  // Retry
+  const retryLoad = useCallback(() => {
+    console.log('🔄 Retry load triggered');
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Formatear fecha
   const formatAppointmentDate = useCallback((dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -320,59 +262,59 @@ export const useDashboard = (navigation: any) => {
       } else if (date.toDateString() === tomorrow.toDateString()) {
         return 'Mañana';
       } else {
-        return date.toLocaleDateString('es-AR', { 
-          weekday: 'long', 
-          month: 'short', 
-          day: 'numeric' 
+        return date.toLocaleDateString('es-ES', { 
+          weekday: 'short', 
+          day: 'numeric', 
+          month: 'short' 
         });
       }
     } catch (error) {
-      console.error('Error formatting date:', error);
       return dateString;
     }
   }, []);
 
+  // Formatear hora
   const formatAppointmentTime = useCallback((timeString: string) => {
     try {
-      const time = new Date(timeString);
-      return time.toLocaleTimeString('es-AR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false
-      });
+      const [hours, minutes] = timeString.split(':');
+      return `${hours}:${minutes}`;
     } catch (error) {
-      console.error('Error formatting time:', error);
       return timeString;
     }
   }, []);
 
-  // ============================================================================
-  // RETURN OPTIMIZADO
-  // ============================================================================
+  // ✅ NUEVO: Función para forzar refresh desde otras pantallas
+  const triggerRefresh = useCallback(() => {
+    console.log('🎯 External refresh trigger received');
+    setLastRefreshTime(0); // Resetear timestamp para forzar refresh
+    refreshDashboard();
+  }, [refreshDashboard]);
+
   return {
-    // Estados
+    // Estado
     dashboardData,
     loading,
     refreshing,
-    wellnessCompleted,
-    selectedClinic,
-    user,
     error,
+    user,
+    selectedClinic,
+    lastRefreshTime, // ✅ NUEVO
     
-    // Funciones - todas memoizadas para evitar re-renders
-    handleWellnessCheckIn,
-    handleTreatmentPress,
+    // Handlers
     handleNewAppointment,
     handleNextAppointmentPress,
     handleChangeClinic,
     handleProfilePress,
     handleBeautyPointsPress,
+    handleTreatmentPress,
     handleSeeAllTreatments,
+    
+    // Utilidades
     onRefresh,
+    retryLoad,
+    refreshDashboard, // ✅ NUEVO
+    triggerRefresh, // ✅ NUEVO
     formatAppointmentDate,
     formatAppointmentTime,
-    
-    // Función para retry manual en caso de error
-    retryLoad: () => loadDashboardData(false),
   };
 };

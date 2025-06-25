@@ -660,16 +660,6 @@ if (__DEV__) {
 export default premiumTypographyStyles;
 
 // Individual exports
-export {
-  fontFamilies,
-  premiumWeights,
-  premiumLineHeights,
-  premiumLetterSpacing,
-  contextStyles,
-  themedTypography,
-  responsiveSizes,
-  breakpoints,
-};
 
 // ============================================================================
 // 🔤 TYPESCRIPT TYPES
@@ -697,3 +687,12 @@ export type TypographyConfig = {
 };
 
 export type AccessibilityPreference = 'small' | 'medium' | 'large' | 'xl';
+// Exportar todo de una vez
+export {
+  premiumWeights,
+  premiumLineHeights,
+  premiumLetterSpacing,
+  contextStyles,
+  themedTypography,
+  responsiveSizes,
+};

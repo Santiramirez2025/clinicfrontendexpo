@@ -18,8 +18,8 @@ import { store, persistor } from './src/store';
 import type { RootState } from './src/store';
 import { setUser, setToken, setLoading, logout } from './src/store/slices/authSlice';
 
-// Navigators
-import TabNavigator from './src/navigation/TabNavigator';
+// Navigators - ✅ CAMBIO PRINCIPAL: MainStackNavigator en lugar de TabNavigator
+import MainStackNavigator from './src/navigation/MainStackNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
 // API Service
@@ -245,7 +245,8 @@ const AppContent = () => {
     console.log(`👋 Welcome back, ${user.name}!`);
   }
 
-  return isAuthenticated ? <TabNavigator /> : <AuthNavigator />;
+  // ✅ CAMBIO PRINCIPAL: MainStackNavigator en lugar de TabNavigator
+  return isAuthenticated ? <MainStackNavigator /> : <AuthNavigator />;
 };
 
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {

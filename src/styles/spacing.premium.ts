@@ -450,15 +450,6 @@ if (__DEV__) {
 export default premiumSpacing;
 
 // Individual exports
-export {
-  premiumLayout,
-  premiumComponents,
-  premiumAesthetic,
-  premiumSpacingUtils,
-  GOLDEN_RATIO,
-  BASE_UNIT,
-  SPACING_SCALE,
-};
 
 // ============================================================================
 // 🔤 TYPESCRIPT TYPES
@@ -467,3 +458,10 @@ export type SpacingKey = keyof typeof premiumSpacing;
 export type SpacingValue = typeof premiumSpacing[SpacingKey];
 export type ComponentSize = 'small' | 'medium' | 'large';
 export type SpacingTheme = 'minimal' | 'wellness' | 'vip'
+// Exportar todo de una vez
+export {
+  premiumLayout,
+  premiumComponents,
+  premiumAesthetic,
+  premiumSpacingUtils,
+};

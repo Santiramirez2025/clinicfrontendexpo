@@ -1,26 +1,21 @@
 // ============================================================================
-// TabNavigator.tsx - VERSIÓN MEJORADA CON COHERENCIA TOTAL
+// TabNavigator.tsx - VERSIÓN ELEGANTE PARA MUJERES PROFESIONALES 30-50
 // ============================================================================
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { 
   View, 
   Text, 
   TouchableOpacity, 
-  Alert, 
   Animated,
   Dimensions,
-  Platform,
-  StatusBar,
   StyleSheet,
 } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootState } from '../store';
-import { logout } from '../store/slices/authSlice';
-import { authAPI, handleApiError } from '../services/api';
 
-// ✅ IMPORTAR SISTEMA DE ESTILOS COHERENTE
+// ✅ SISTEMA DE ESTILOS ELEGANTE
 import { 
   modernColors, 
   modernSpacing,
@@ -28,185 +23,32 @@ import {
   modernShadows 
 } from '../styles';
 
-// Import screens
-import HomeScreen from '../screens/dashboard/DashboardScreen'; // ✅ Cambio: HomeScreen en lugar de DashboardScreen
-import AppointmentScreen from '../screens/appointments/AppointmentScreen';
+// ✅ PANTALLAS
+import DashboardScreen from '../screens/dashboard/DashboardScreen';
+import AppointmentsScreen from '../screens/appointments/AppointmentScreen';
+import BookAppointmentScreen from '../screens/appointments/BookAppointmentScreen';
 import VIPScreen from '../screens/vip/VIPScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
-const { width } = Dimensions.get('window');
-
-// ✅ ICONOS COHERENTES CON TU DISEÑO
-const modernIcons = {
-  home: '🏠',        // Casa para Home
-  calendar: '📅',     // Calendario para Citas
-  premium: '👑',      // Corona para VIP
-  profile: '👤',      // Persona para Perfil
-  logout: '👋',       // Saludo para Logout
+// ✅ ICONOS ELEGANTES Y SOFISTICADOS
+const elegantIcons = {
+  dashboard: '◊',     // Diamante elegante
+  calendar: '◐',      // Media luna sofisticada  
+  add: '⊕',          // Plus refinado
+  premium: '♦',       // Diamante premium
+  profile: '◉',       // Círculo elegante
 };
 
 // ============================================================================
-// COMPONENTE DE LOGOUT MODERNO MEJORADO
+// COMPONENTE DE TAB ICON ELEGANTE
 // ============================================================================
-const ModernLogoutScreen = () => {
-  const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handleLogout = async () => {
-    Alert.alert(
-      `Hasta pronto, ${user?.firstName || 'bella'} 💖`,
-      '¿Estás segura de que quieres cerrar sesión?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            setIsAnimating(true);
-            
-            try {
-              // Animación de salida
-              Animated.sequence([
-                Animated.timing(scaleAnim, {
-                  toValue: 0.95,
-                  duration: 150,
-                  useNativeDriver: true,
-                }),
-                Animated.timing(fadeAnim, {
-                  toValue: 0,
-                  duration: 300,
-                  useNativeDriver: true,
-                }),
-              ]).start();
-
-              // Logout del backend
-              await authAPI.logout();
-              
-              // Logout del store
-              dispatch(logout());
-              
-            } catch (error) {
-              const errorMessage = handleApiError(error, 'Error al cerrar sesión');
-              Alert.alert('Error', errorMessage);
-              setIsAnimating(false);
-            }
-          },
-        },
-      ],
-      { userInterfaceStyle: 'light' }
-    );
-  };
-
-  return (
-    <View style={styles.logoutContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor={modernColors.backgroundWarm} />
-      
-      <Animated.View 
-        style={[
-          styles.logoutCard,
-          {
-            opacity: fadeAnim,
-            transform: [
-              { scale: scaleAnim },
-              { translateY: slideAnim }
-            ]
-          }
-        ]}
-      >
-        {/* Avatar personalizado */}
-        <View style={styles.logoutIconContainer}>
-          <Text style={styles.userAvatar}>
-            {user?.firstName?.[0]?.toUpperCase() || '💆‍♀️'}
-          </Text>
-        </View>
-        
-        {/* Contenido personalizado */}
-        <View style={styles.logoutContent}>
-          <Text style={styles.logoutTitle}>
-            Hasta pronto, {user?.firstName || 'bella'}
-          </Text>
-          <Text style={styles.logoutSubtitle}>
-            Nos vemos en tu próximo momento de bienestar ✨
-          </Text>
-          
-          {/* Stats rápidas */}
-          <View style={styles.quickStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.beautyPoints || 0}</Text>
-              <Text style={styles.statLabel}>Beauty Points</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{user?.sessionsCompleted || 0}</Text>
-              <Text style={styles.statLabel}>Sesiones</Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Botón principal */}
-        <TouchableOpacity 
-          style={[
-            styles.logoutButton,
-            isAnimating && styles.logoutButtonDisabled
-          ]}
-          onPress={handleLogout}
-          disabled={isAnimating}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logoutButtonIcon}>
-            {isAnimating ? '⏳' : '👋'}
-          </Text>
-          <Text style={styles.logoutButtonText}>
-            {isAnimating ? 'Cerrando sesión...' : 'Cerrar sesión'}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Link de ayuda */}
-        <TouchableOpacity style={styles.helpLink}>
-          <Text style={styles.helpLinkText}>¿Necesitas ayuda? 💬</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
-  );
-};
-
-// ============================================================================
-// COMPONENTE DE TAB ICON MEJORADO
-// ============================================================================
-const ModernTabIcon = ({ 
+const ElegantTabIcon = ({ 
   icon, 
   label,
   focused, 
   hasNotification = false,
   notificationCount = 0,
+  isFloating = false,
   onPress,
 }: { 
   icon: string;
@@ -214,24 +56,30 @@ const ModernTabIcon = ({
   focused: boolean; 
   hasNotification?: boolean;
   notificationCount?: number;
+  isFloating?: boolean;
   onPress?: () => void;
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0.6)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (focused) {
       Animated.parallel([
         Animated.spring(scaleAnim, {
-          toValue: 1.1,
-          tension: 300,
-          friction: 10,
+          toValue: isFloating ? 1.05 : 1.1,
+          tension: 200,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 200,
+          toValue: isFloating ? 0.3 : 0.2,
+          duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
@@ -239,68 +87,96 @@ const ModernTabIcon = ({
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
-          tension: 300,
-          friction: 10,
+          tension: 200,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0.6,
+          duration: 200,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [focused]);
-
-  // Animación de notificación
-  useEffect(() => {
-    if (hasNotification) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bounceAnim, {
-            toValue: 1.2,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(bounceAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    }
-  }, [hasNotification]);
+  }, [focused, isFloating]);
 
   const handlePress = () => {
-    // Micro-animación en tap
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.95,
-        duration: 100,
+        duration: 80,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
-        toValue: focused ? 1.1 : 1,
-        tension: 300,
-        friction: 10,
+        toValue: focused ? (isFloating ? 1.05 : 1.1) : 1,
+        tension: 200,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
-
     onPress?.();
   };
 
+  // Botón flotante central refinado
+  if (isFloating) {
+    return (
+      <TouchableOpacity 
+        style={styles.floatingContainer}
+        onPress={handlePress}
+        activeOpacity={0.85}
+      >
+        <Animated.View 
+          style={[
+            styles.floatingGlow,
+            {
+              opacity: glowAnim,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        />
+        <Animated.View 
+          style={[
+            styles.floatingButton,
+            {
+              transform: [{ scale: scaleAnim }],
+              backgroundColor: focused ? '#B8956F' : '#D4B896',
+              shadowColor: '#D4A574',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.25,
+              shadowRadius: 12,
+              elevation: 12,
+            }
+          ]}
+        >
+          <Text style={[styles.floatingIcon, { color: focused ? '#FFFFFF' : '#8B7355' }]}>
+            {icon}
+          </Text>
+        </Animated.View>
+        <Text style={[
+          styles.floatingLabel,
+          { color: focused ? '#6B5B47' : '#8B7355' }
+        ]}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <TouchableOpacity 
-      style={styles.tabIconContainer}
+      style={styles.tabContainer}
       onPress={handlePress}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
-      {/* Glow effect para tab activo */}
+      {/* Glow sutil */}
       <Animated.View 
         style={[
-          styles.tabIconGlow,
+          styles.iconGlow,
           {
             opacity: glowAnim,
             transform: [{ scale: scaleAnim }]
@@ -311,59 +187,60 @@ const ModernTabIcon = ({
       {/* Contenedor del icono */}
       <Animated.View 
         style={[
-          styles.tabIconInner,
+          styles.iconContainer,
           {
-            backgroundColor: focused ? modernColors.accent : 'transparent',
+            backgroundColor: focused ? '#F5F1EC' : 'transparent',
             transform: [{ scale: scaleAnim }]
           }
         ]}
       >
-        <Text style={[
-          styles.tabIconText,
-          { 
-            color: focused ? '#FFFFFF' : modernColors.gray600,
-          }
-        ]}>
-          {icon}
-        </Text>
-      </Animated.View>
-      
-      {/* Badge de notificación mejorado */}
-      {hasNotification && (
-        <Animated.View 
+        <Animated.Text 
           style={[
-            styles.notificationBadge,
-            { transform: [{ scale: bounceAnim }] }
+            styles.iconText,
+            { 
+              color: focused ? '#6B5B47' : '#A0937D',
+              opacity: opacityAnim,
+            }
           ]}
         >
+          {icon}
+        </Animated.Text>
+      </Animated.View>
+      
+      {/* Badge de notificación elegante */}
+      {hasNotification && (
+        <View style={styles.notificationBadge}>
           {notificationCount > 0 ? (
-            <Text style={styles.notificationCount}>
-              {notificationCount > 99 ? '99+' : notificationCount}
+            <Text style={styles.notificationText}>
+              {notificationCount > 9 ? '9+' : notificationCount}
             </Text>
           ) : (
             <View style={styles.notificationDot} />
           )}
-        </Animated.View>
+        </View>
       )}
       
-      {/* Label del tab */}
-      <Text style={[
-        styles.tabLabel,
-        { 
-          color: focused ? modernColors.accent : modernColors.gray600,
-          fontWeight: focused ? '600' : '400',
-        }
-      ]}>
+      {/* Label elegante */}
+      <Animated.Text 
+        style={[
+          styles.tabLabel,
+          { 
+            color: focused ? '#6B5B47' : '#A0937D',
+            opacity: opacityAnim,
+            fontWeight: focused ? '600' : '400',
+          }
+        ]}
+      >
         {label}
-      </Text>
+      </Animated.Text>
     </TouchableOpacity>
   );
 };
 
 // ============================================================================
-// TAB BAR PERSONALIZADO MEJORADO
+// TAB BAR ELEGANTE Y PROFESIONAL
 // ============================================================================
-const ModernTabBar = ({ state, descriptors, navigation }: any) => {
+const ElegantTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const user = useSelector((state: RootState) => state.auth.user);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -371,41 +248,48 @@ const ModernTabBar = ({ state, descriptors, navigation }: any) => {
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: 1,
-      duration: 400,
+      duration: 500,
       useNativeDriver: true,
     }).start();
   }, []);
+  
+  // ✅ OCULTAR TABBAR EN PANTALLAS DE APPOINTMENTS
+  const currentRoute = state.routes[state.index].name;
+  if (currentRoute === 'Appointments' || currentRoute === 'BookAppointment') {
+    return null;
+  }
 
-  // ✅ CONFIGURACIÓN MEJORADA DE TABS
+  // ✅ CONFIGURACIÓN ELEGANTE
   const tabConfig = [
     { 
-      key: 'Home', 
-      icon: modernIcons.home, 
+      key: 'Dashboard', 
+      icon: elegantIcons.dashboard, 
       label: 'Inicio',
       hasNotification: false,
     },
     { 
       key: 'Appointments', 
-      icon: modernIcons.calendar, 
+      icon: elegantIcons.calendar, 
       label: 'Citas',
-      hasNotification: false, // Podrías agregar lógica para próximas citas
-    },
-    { 
-      key: 'VIP', 
-      icon: "diamond", 
-      label: user?.vipStatus ? 'VIP' : 'Premium',
-      hasNotification: !user?.vipStatus, // Notificación si no es VIP
-    },
-    { 
-      key: 'Profile', 
-      icon: modernIcons.profile, 
-      label: 'Perfil',
       hasNotification: false,
     },
     { 
-      key: 'Logout', 
-      icon: modernIcons.logout, 
-      label: 'Salir',
+      key: 'BookAppointment', 
+      icon: elegantIcons.add, 
+      label: 'Reservar',
+      hasNotification: false,
+      isFloating: true,
+    },
+    { 
+      key: 'VIP', 
+      icon: elegantIcons.premium, 
+      label: 'Premium',
+      hasNotification: !user?.vipStatus,
+    },
+    { 
+      key: 'Profile', 
+      icon: elegantIcons.profile, 
+      label: 'Perfil',
       hasNotification: false,
     },
   ];
@@ -413,9 +297,9 @@ const ModernTabBar = ({ state, descriptors, navigation }: any) => {
   return (
     <Animated.View 
       style={[
-        styles.modernTabBar,
+        styles.tabBar,
         {
-          paddingBottom: insets.bottom + 8,
+          paddingBottom: insets.bottom + 12,
           transform: [
             {
               translateY: slideAnim.interpolate({
@@ -427,11 +311,14 @@ const ModernTabBar = ({ state, descriptors, navigation }: any) => {
         }
       ]}
     >
-      {/* Backdrop con colores coherentes */}
-      <View style={styles.tabBarBackdrop} />
+      {/* Backdrop elegante */}
+      <View style={styles.backdrop} />
       
-      {/* Contenedor de tabs */}
-      <View style={styles.tabBarContent}>
+      {/* Línea decorativa superior */}
+      <View style={styles.topLine} />
+      
+      {/* Contenido de tabs */}
+      <View style={styles.tabContent}>
         {tabConfig.map((tab, index) => {
           const route = state.routes.find((r: any) => r.name === tab.key);
           if (!route) return null;
@@ -451,12 +338,13 @@ const ModernTabBar = ({ state, descriptors, navigation }: any) => {
           };
 
           return (
-            <ModernTabIcon
+            <ElegantTabIcon
               key={tab.key}
               icon={tab.icon}
               label={tab.label}
               focused={isFocused}
               hasNotification={tab.hasNotification}
+              isFloating={tab.isFloating}
               onPress={onPress}
             />
           );
@@ -467,193 +355,35 @@ const ModernTabBar = ({ state, descriptors, navigation }: any) => {
 };
 
 // ============================================================================
-// NAVIGATOR PRINCIPAL MEJORADO
+// NAVIGATOR PRINCIPAL
 // ============================================================================
 const Tab = createBottomTabNavigator();
 
 const TabNavigator: React.FC = () => {
   return (
     <Tab.Navigator
-      initialRouteName="Home"
-      tabBar={(props) => <ModernTabBar {...props} />}
+      initialRouteName="Dashboard"
+      tabBar={(props) => <ElegantTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        lazy: true, // ✅ Lazy loading para mejor performance
+        lazy: true,
       }}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen}
-        options={{
-          title: 'Inicio'
-        }}
-      />
-      <Tab.Screen 
-        name="Appointments" 
-        component={AppointmentScreen}
-        options={{
-          title: 'Citas'
-        }}
-      />
-      <Tab.Screen 
-        name="VIP" 
-        component={VIPScreen}
-        options={{
-          title: 'VIP'
-        }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{
-          title: 'Perfil'
-        }}
-      />
-      <Tab.Screen 
-        name="Logout" 
-        component={ModernLogoutScreen}
-        options={{
-          title: 'Salir'
-        }}
-      />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="Appointments" component={AppointmentsScreen} />
+      <Tab.Screen name="BookAppointment" component={BookAppointmentScreen} />
+      <Tab.Screen name="VIP" component={VIPScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 };
 
 // ============================================================================
-// ESTILOS MEJORADOS CON COHERENCIA TOTAL
+// ESTILOS ELEGANTES Y SOFISTICADOS
 // ============================================================================
 const styles = StyleSheet.create({
-  // Logout Screen
-  logoutContainer: {
-    flex: 1,
-    backgroundColor: modernColors.backgroundWarm,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: modernSpacing.aesthetic.cardSpacing,
-  },
-  
-  logoutCard: {
-    backgroundColor: modernColors.surfaceElevated,
-    borderRadius: modernSpacing.componentModern.radiusXL,
-    padding: modernSpacing.aesthetic.cardSpacing + 8,
-    alignItems: 'center',
-    ...modernShadows.lg,
-    width: '100%',
-    maxWidth: 320,
-  },
-  
-  logoutIconContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: modernColors.accent + '15',
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: modernSpacing.aesthetic.cardSpacing,
-    ...modernShadows.sm,
-  },
-  
-  userAvatar: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: modernColors.accent,
-  },
-  
-  logoutContent: {
-    alignItems: 'center',
-    marginBottom: modernSpacing.aesthetic.cardSpacing,
-  },
-  
-  logoutTitle: {
-    fontSize: modernTypography.fontSizeModern.xl,
-    fontWeight: '600',
-    color: modernColors.charcoal,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  
-  logoutSubtitle: {
-    fontSize: modernTypography.fontSizeModern.base,
-    color: modernColors.gray600,
-    textAlign: 'center',
-    lineHeight: modernTypography.lineHeightModern.relaxed * modernTypography.fontSizeModern.base,
-    marginBottom: modernSpacing.aesthetic.itemSpacing,
-  },
-  
-  quickStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: modernColors.gray50,
-    paddingHorizontal: modernSpacing.aesthetic.itemSpacing,
-    paddingVertical: 12,
-    borderRadius: modernSpacing.componentModern.radiusMD,
-  },
-  
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  
-  statValue: {
-    fontSize: modernTypography.fontSizeModern.lg,
-    fontWeight: '700',
-    color: modernColors.accent,
-  },
-  
-  statLabel: {
-    fontSize: modernTypography.fontSizeModern.xs,
-    color: modernColors.gray600,
-    marginTop: 2,
-  },
-  
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: modernColors.gray200,
-    marginHorizontal: modernSpacing.aesthetic.itemSpacing,
-  },
-  
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: modernColors.accent,
-    paddingHorizontal: modernSpacing.aesthetic.cardSpacing,
-    paddingVertical: modernSpacing.aesthetic.itemSpacing,
-    borderRadius: modernSpacing.componentModern.radiusMD,
-    ...modernShadows.colored.accent,
-    minWidth: 180,
-    justifyContent: 'center',
-    marginBottom: modernSpacing.aesthetic.itemSpacing,
-  },
-  
-  logoutButtonDisabled: {
-    opacity: 0.6,
-  },
-  
-  logoutButtonIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  
-  logoutButtonText: {
-    fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  
-  helpLink: {
-    padding: 8,
-  },
-  
-  helpLinkText: {
-    fontSize: modernTypography.fontSizeModern.sm,
-    color: modernColors.gray600,
-    textAlign: 'center',
-  },
-
-  // Modern Tab Bar
-  modernTabBar: {
+  // Tab Bar Principal
+  tabBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -661,87 +391,149 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   
-  tabBarBackdrop: {
+  backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: modernColors.surfaceElevated,
-    opacity: 0.98,
-    borderTopLeftRadius: modernSpacing.componentModern.radiusXL,
-    borderTopRightRadius: modernSpacing.componentModern.radiusXL,
-    ...modernShadows.lg,
+    backgroundColor: '#FEFCF9',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: '#8B7355',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 12,
+    borderTopWidth: 0.5,
+    borderTopColor: '#E8D5B7',
   },
   
-  tabBarContent: {
+  topLine: {
+    height: 3,
+    backgroundColor: '#E8D5B7',
+    marginHorizontal: 60,
+    marginTop: 8,
+    borderRadius: 2,
+    opacity: 0.6,
+  },
+  
+  tabContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingTop: modernSpacing.aesthetic.itemSpacing,
-    paddingHorizontal: 8,
+    paddingTop: 18,
+    paddingHorizontal: 12,
   },
 
-  // Tab Icons
-  tabIconContainer: {
+  // Botón Flotante Central
+  floatingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingVertical: 8,
+    marginTop: -24,
     position: 'relative',
   },
   
-  tabIconGlow: {
+  floatingGlow: {
     position: 'absolute',
-    top: 8,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: modernColors.accent + '20',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#E8D5B7',
+    top: -7,
   },
   
-  tabIconInner: {
+  floatingButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#D4B896',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    borderWidth: 2,
+    borderColor: '#FEFCF9',
+  },
+  
+  floatingIcon: {
+    fontSize: 22,
+    fontWeight: '300',
+  },
+  
+  floatingLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+
+  // Tabs Regulares
+  tabContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: 10,
+    position: 'relative',
+  },
+  
+  iconGlow: {
+    position: 'absolute',
+    top: 6,
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
+    backgroundColor: '#E8D5B7',
   },
   
-  tabIconText: {
-    fontSize: 18,
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  
+  iconText: {
+    fontSize: 16,
+    fontWeight: '300',
   },
   
   notificationBadge: {
     position: 'absolute',
-    top: 6,
+    top: 4,
     right: '50%',
-    marginRight: -18,
-    minWidth: 16,
-    height: 16,
-    backgroundColor: modernColors.errorModern,
-    borderRadius: 8,
+    marginRight: -16,
+    minWidth: 14,
+    height: 14,
+    backgroundColor: '#B8956F',
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    ...modernShadows.sm,
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: '#FEFCF9',
+    shadowColor: '#8B7355',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   
   notificationDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    backgroundColor: '#FEFCF9',
+    borderRadius: 3,
   },
   
-  notificationCount: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  notificationText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#FEFCF9',
     textAlign: 'center',
   },
   
   tabLabel: {
-    fontSize: modernTypography.fontSizeModern.xs,
+    fontSize: 10.5,
     textAlign: 'center',
-    marginTop: 2,
+    letterSpacing: 0.2,
   },
 });
 

@@ -1,45 +1,35 @@
-// ============================================================================
-// screens/profile/ProfileScreen.tsx - REORGANIZADO
-// ============================================================================
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
-  StatusBar,
-  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-// Hooks
+import { Ionicons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../store/slices/authSlice';
+import { authAPI } from '../../services/api';
 import { useProfile } from '../../hooks/useProfile';
-import { useClinicSelector } from '../../hooks/useClinicSelector';
-import { useProfileActions } from '../../hooks/useProfileActions';
+import { modernColors, modernTypography } from '../../styles';
 
-// Componentes básicos
-import { ProfileHeader } from '../../components/profile/ProfileHeader';
-import { SectionHeader } from '../../components/profile/SectionHeader';
-import { InputField } from '../../components/profile/InputField';
-import { NotificationToggle } from '../../components/profile/NotificationToggle';
-import { SaveButton } from '../../components/profile/SaveButton';
-import { LegalCard } from '../../components/profile/LegalCard';
-import { ActionButton } from '../../components/profile/ActionButton';
-import { ClinicSelectionModal } from '../../components/profile/ClinicSelectionModal';
+// Componentes
+import {
+  ProfileAvatar,
+  InputField,
+  MultiSelector,
+  NotificationSwitch,
+  MenuItem,
+} from '../../components/profile/ProfileComponents';
 
-// Componentes avanzados
-import { ProfileStatsCard } from '../../components/profile/ProfileStatsCard';
-import { InviteFriendCard } from '../../components/profile/InviteFriendCard';
-
-// Estilos y constantes
-import { profileStyles } from '../../components/profile/styles';
-import { modernColors } from '../../styles';
-
-// ============================================================================
-// COMPONENTE PRINCIPAL
-// ============================================================================
-const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  // Custom hooks
+const ProfileScreen = ({ navigation }: any) => {
+  const dispatch = useDispatch();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
   const {
     profile,
     notifications,
@@ -52,82 +42,135 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     handleProfileChange,
     handleNotificationChange,
     saveProfile,
-    onRefresh
+    onRefresh,
   } = useProfile();
 
-  const {
-    clinicModalVisible,
-    setClinicModalVisible,
-    selectedClinic,
-    availableClinics,
-    handleChangeClinic,
-    handleSelectClinic
-  } = useClinicSelector();
+  // Opciones de tratamientos
+  const treatmentOptions = [
+    { id: 'facial', label: 'Faciales', icon: '💆‍♀️' },
+    { id: 'masaje', label: 'Masajes', icon: '🤲' },
+    { id: 'manicure', label: 'Manicure', icon: '💅' },
+    { id: 'pedicure', label: 'Pedicure', icon: '🦶' },
+    { id: 'depilacion', label: 'Depilación', icon: '✨' },
+    { id: 'corporal', label: 'Corporal', icon: '🧴' },
+  ];
 
-  const {
-    handleLogout,
-    handleDeleteAccount,
-    handleOpenPrivacyPolicy
-  } = useProfileActions();
+  // Opciones de horarios
+  const scheduleOptions = [
+    { id: 'morning', label: 'Mañana', icon: '🌅' },
+    { id: 'afternoon', label: 'Tarde', icon: '☀️' },
+    { id: 'evening', label: 'Noche', icon: '🌙' },
+    { id: 'weekend', label: 'Fines de semana', icon: '📅' },
+  ];
+
+  // Handlers
+  const handleAvatarPress = () => {
+    Alert.alert(
+      'Cambiar foto de perfil',
+      'Esta función estará disponible próximamente',
+      [{ text: 'Entendido', style: 'default' }]
+    );
+  };
+
+  const handleSave = async () => {
+    await saveProfile();
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás segura que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: performLogout,
+        },
+      ]
+    );
+  };
+
+  const performLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await authAPI.logout();
+      dispatch(logout());
+    } catch (error) {
+      console.error('Error durante logout:', error);
+      Alert.alert('Error', 'No se pudo cerrar sesión. Intenta nuevamente.');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleChangePassword = () => {
+    navigation.navigate('ChangePassword');
+  };
 
   if (loading) {
     return (
-      <SafeAreaView style={profileStyles.container}>
-        <View style={profileStyles.loadingContainer}>
-          <ActivityIndicator size="large" color={modernColors.accent} />
-          <Text style={profileStyles.loadingText}>Cargando tu perfil...</Text>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingEmoji}>👤</Text>
+          <Text style={styles.loadingText}>Cargando perfil...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={profileStyles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={modernColors.backgroundWarm} />
-      
-      {/* Header */}
-      <ProfileHeader 
-        profile={profile}
-        isVIP={user?.vipStatus || false}
-      />
-
-      <ScrollView
-        style={profileStyles.scrollView}
-        contentContainerStyle={profileStyles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[modernColors.accent]}
-            tintColor={modernColors.accent}
-          />
-        }
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Datos Personales */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Datos Personales"
-            subtitle="Información básica de tu cuenta"
-            icon="👤"
-          />
-          
-          <View style={profileStyles.sectionContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={modernColors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Mi Perfil</Text>
+          <TouchableOpacity 
+            onPress={handleSave} 
+            disabled={!hasUnsavedChanges || saving}
+          >
+            <Text style={[
+              styles.saveButton,
+              (!hasUnsavedChanges || saving) && styles.saveButtonDisabled
+            ]}>
+              {saving ? 'Guardando...' : 'Guardar'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Foto de perfil y información básica */}
+          <ProfileAvatar user={user} onPress={handleAvatarPress} />
+
+          {/* Datos personales */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Datos personales</Text>
+            
             <InputField
               label="Nombre"
               value={profile.firstName}
               onChangeText={(text) => handleProfileChange('firstName', text)}
-              placeholder="Tu nombre"
-              required
+              placeholder="Ingresa tu nombre"
               error={errors.firstName}
             />
             
             <InputField
-              label="Apellidos"
+              label="Apellido"
               value={profile.lastName}
               onChangeText={(text) => handleProfileChange('lastName', text)}
-              placeholder="Tus apellidos"
-              required
+              placeholder="Ingresa tu apellido"
               error={errors.lastName}
             />
             
@@ -137,7 +180,6 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               onChangeText={(text) => handleProfileChange('email', text)}
               placeholder="tu@email.com"
               keyboardType="email-address"
-              required
               error={errors.email}
               editable={false}
             />
@@ -146,135 +188,172 @@ const ProfileScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               label="Teléfono"
               value={profile.phone}
               onChangeText={(text) => handleProfileChange('phone', text)}
-              placeholder="+34 600 123 456"
+              placeholder="+34 666 123 456"
               keyboardType="phone-pad"
               error={errors.phone}
             />
+            
+            <InputField
+              label="Fecha de nacimiento (opcional)"
+              value={profile.birthDate || ''}
+              onChangeText={(text) => handleProfileChange('birthDate', text)}
+              placeholder="YYYY-MM-DD"
+            />
           </View>
-        </View>
 
-        {/* Configuración de Notificaciones */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Notificaciones"
-            subtitle="Gestiona cómo te contactamos"
-            icon="🔔"
-          />
-          
-          <View style={profileStyles.sectionContent}>
-            <NotificationToggle
+          {/* Preferencias de tratamientos */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Preferencias</Text>
+            
+            <MultiSelector
+              label="Tratamientos favoritos"
+              options={treatmentOptions}
+              selectedValues={profile.treatmentPreferences}
+              onSelectionChange={(values) => handleProfileChange('treatmentPreferences', values)}
+            />
+            
+            <MultiSelector
+              label="Horarios preferidos"
+              options={scheduleOptions}
+              selectedValues={profile.preferredSchedule}
+              onSelectionChange={(values) => handleProfileChange('preferredSchedule', values)}
+            />
+          </View>
+
+          {/* Notas adicionales */}
+          <View style={styles.section}>
+            <InputField
+              label="Notas adicionales (opcional)"
+              value={profile.notes || ''}
+              onChangeText={(text) => handleProfileChange('notes', text)}
+              placeholder="Alergias, preferencias especiales, etc."
+              multiline
+            />
+          </View>
+
+          {/* Configuración de notificaciones */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Notificaciones</Text>
+            
+            <NotificationSwitch
               label="Recordatorios de citas"
-              description="Te avisamos 24h antes de tu cita"
+              description="Recibe notificaciones sobre tus próximas citas"
               value={notifications.appointments}
               onValueChange={(value) => handleNotificationChange('appointments', value)}
-              icon="📅"
+              icon="calendar"
             />
             
-            <NotificationToggle
-              label="Promociones y novedades"
-              description="Ofertas especiales y nuevos tratamientos"
+            <NotificationSwitch
+              label="Promociones y ofertas"
+              description="Entérate de descuentos y promociones especiales"
               value={notifications.promotions}
               onValueChange={(value) => handleNotificationChange('promotions', value)}
-              icon="🎁"
+              icon="pricetag"
             />
             
-            <NotificationToggle
+            <NotificationSwitch
               label="Tips de bienestar"
-              description="Consejos personalizados de cuidado"
+              description="Consejos para cuidar tu belleza y bienestar"
               value={notifications.wellness}
               onValueChange={(value) => handleNotificationChange('wellness', value)}
-              icon="🌿"
+              icon="leaf"
             />
             
-            <NotificationToggle
-              label="Mensajes de seguimiento"
-              description="Cómo te sientes después de tu cita"
-              value={notifications.followUp}
-              onValueChange={(value) => handleNotificationChange('followUp', value)}
-              icon="💬"
+            {/* ✅ CORREGIDO: Campo 'offers' en lugar de 'followUp' */}
+            <NotificationSwitch
+              label="Ofertas especiales"
+              description="Recibe ofertas y promociones exclusivas"
+              value={notifications.offers}
+              onValueChange={(value) => handleNotificationChange('offers', value)}
+              icon="gift"
             />
           </View>
-        </View>
 
-        {/* Botón Guardar */}
-        <SaveButton
-          onPress={saveProfile}
-          saving={saving}
-          visible={hasUnsavedChanges}
-        />
-
-        {/* Políticas y Términos */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Privacidad y Términos"
-            subtitle="Información legal importante"
-            icon="📋"
-          />
-          
-          <View style={profileStyles.sectionContent}>
-            <LegalCard onOpenPrivacyPolicy={handleOpenPrivacyPolicy} />
-          </View>
-        </View>
-
-        {/* Estadísticas del Perfil - MOVIDO AQUÍ */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Tu Actividad"
-            subtitle="Resumen de tu experiencia"
-            icon="📊"
-          />
-          
-          <ProfileStatsCard
-            totalAppointments={user?.totalAppointments || 0}
-            beautyPoints={user?.beautyPoints || 0}
-            memberSince={user?.memberSince || new Date().toISOString()}
-            vipStatus={user?.vipStatus || false}
-          />
-        </View>
-
-        {/* Invitar Amigos - MOVIDO AQUÍ */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Comparte y Gana"
-            subtitle="Invita amigos y obtén beneficios"
-            icon="🎁"
-          />
-          
-          <InviteFriendCard
-            userName={profile.firstName}
-            onInvite={() => console.log('Invitar amigo')}
-            referralCode={user?.referralCode || 'BEAUTY2024'}
-          />
-        </View>
-
-        {/* Acciones de Cuenta */}
-        <View style={profileStyles.section}>
-          <SectionHeader
-            title="Cuenta"
-            subtitle="Gestión de tu cuenta"
-            icon="⚙️"
-          />
-          
-          <View style={profileStyles.sectionContent}>
-            <ActionButton
-              icon="🚪"
-              text="Cerrar Sesión"
+          {/* Opciones de cuenta */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Cuenta</Text>
+            
+            <MenuItem
+              icon="lock-closed"
+              label="Cambiar contraseña"
+              onPress={handleChangePassword}
+            />
+            
+            <MenuItem
+              icon="log-out"
+              label={isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
               onPress={handleLogout}
-            />
-            
-            <ActionButton
-              icon="⚠️"
-              text="Eliminar Cuenta"
-              onPress={handleDeleteAccount}
-              isDanger={true}
+              isDestructive
+              isLoading={isLoggingOut}
             />
           </View>
-        </View>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
+};
+
+const styles = {
+  container: {
+    flex: 1,
+    backgroundColor: modernColors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    padding: 20,
+  },
+  loadingEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    color: modernColors.gray600,
+    textAlign: 'center' as const,
+  },
+  header: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: modernColors.gray200,
+  },
+  headerTitle: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    fontWeight: '600' as const,
+    color: modernColors.text,
+  },
+  saveButton: {
+    fontSize: modernTypography.fontSizeModern.base,
+    fontWeight: '600' as const,
+    color: modernColors.primary,
+  },
+  saveButtonDisabled: {
+    color: modernColors.gray400,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: modernColors.gray100,
+  },
+  sectionTitle: {
+    fontSize: modernTypography.fontSizeModern.lg,
+    fontWeight: '600' as const,
+    color: modernColors.text,
+    marginBottom: 20,
+  },
+  bottomSpacing: {
+    height: 40,
+  },
 };
 
 export default ProfileScreen;

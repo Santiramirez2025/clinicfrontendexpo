@@ -1,5 +1,5 @@
 // ============================================================================
-// services/api.js - VERSIÓN FINAL COMPLETA Y LISTA
+// services/api.js - VERSIÓN FINAL COMPLETA Y LISTA ✅
 // ============================================================================
 import * as SecureStore from 'expo-secure-store';
 
@@ -304,6 +304,22 @@ class ApiService {
     return this.request('/vip/cancel', { method: 'PUT' });
   }
 
+  async renewVIPSubscription(planType) {
+    console.log('👑 Renewing VIP subscription:', planType);
+    return this.request('/vip/renew', {
+      method: 'POST',
+      body: JSON.stringify({ planType }),
+    });
+  }
+
+  async useVIPBenefit(benefitType) {
+    console.log('👑 Using VIP benefit:', benefitType);
+    return this.request('/vip/use-benefit', {
+      method: 'POST',
+      body: JSON.stringify({ benefitType }),
+    });
+  }
+
   // ========================================================================
   // CITAS / APPOINTMENTS
   // ========================================================================
@@ -341,6 +357,23 @@ class ApiService {
     return this.request(`/appointments/${appointmentId}`, {
       method: 'DELETE',
     });
+  }
+
+  async getAppointmentDetails(appointmentId) {
+    console.log('📅 Getting appointment details:', appointmentId);
+    return this.request(`/appointments/${appointmentId}`);
+  }
+
+  async confirmAttendance(appointmentId) {
+    console.log('📅 Confirming attendance:', appointmentId);
+    return this.request(`/appointments/${appointmentId}/confirm`, {
+      method: 'POST',
+    });
+  }
+
+  async getUpcomingAppointments(limit = 5) {
+    console.log('📅 Getting upcoming appointments...');
+    return this.request(`/appointments/upcoming?limit=${limit}`);
   }
 
   // ========================================================================
@@ -402,12 +435,17 @@ class ApiService {
 
   async getTreatments() {
     console.log('💆‍♀️ Getting treatments...');
-    return this.request('/treatments');
+    return this.request('/appointments/treatments'); // ✅ CORREGIDO: Ruta correcta del backend
   }
 
   async getTreatment(treatmentId) {
     console.log('💆‍♀️ Getting treatment:', treatmentId);
     return this.request(`/treatments/${treatmentId}`);
+  }
+
+  async getAvailableTreatments() {
+    console.log('💆‍♀️ Getting available treatments...');
+    return this.request('/appointments/treatments');
   }
 
   // ========================================================================
@@ -476,7 +514,7 @@ export const api = apiService; // ✅ Esta es la exportación principal
 export default apiService;
 
 // ============================================================================
-// EXPORTACIONES ESPECÍFICAS PARA IMPORTS FÁCILES
+// EXPORTACIONES ESPECÍFICAS PARA IMPORTS FÁCILES - ✅ CORREGIDAS
 // ============================================================================
 
 export const authAPI = {
@@ -498,6 +536,7 @@ export const dashboardAPI = {
   getBeautyPoints: () => apiService.getBeautyPoints(),
 };
 
+// ✅ VIP API - NOMBRES CORREGIDOS PARA COINCIDIR CON useVIP HOOK
 export const vipAPI = {
   getBenefits: () => apiService.getVIPBenefits(),
   getStatus: () => apiService.getVIPStatus(),
@@ -505,14 +544,21 @@ export const vipAPI = {
   getOffers: () => apiService.getVIPOffers(),
   subscribe: (planType, paymentMethodId) => apiService.subscribeVIP(planType, paymentMethodId),
   cancel: () => apiService.cancelVIPSubscription(),
+  renew: (planType) => apiService.renewVIPSubscription(planType),
+  useBenefit: (benefitType) => apiService.useVIPBenefit(benefitType),
 };
 
+// ✅ APPOINTMENT API - AGREGADO delete ALIAS PARA COMPATIBILIDAD
 export const appointmentAPI = {
   getAll: (params) => apiService.getAppointments(params),
   getAvailability: (treatmentId, date) => apiService.getAvailability(treatmentId, date),
   create: (data) => apiService.createAppointment(data),
   update: (id, data) => apiService.updateAppointment(id, data),
   cancel: (id) => apiService.cancelAppointment(id),
+  delete: (id) => apiService.cancelAppointment(id), // ✅ ALIAS para máxima compatibilidad
+  getDetails: (id) => apiService.getAppointmentDetails(id),
+  confirmAttendance: (id) => apiService.confirmAttendance(id),
+  getUpcoming: (limit) => apiService.getUpcomingAppointments(limit),
 };
 
 export const profileAPI = {
@@ -525,9 +571,11 @@ export const profileAPI = {
   changePassword: (current, newPass) => apiService.changePassword(current, newPass),
 };
 
+// ✅ TREATMENT API - AGREGADO MÉTODO PARA APPOINTMENTS
 export const treatmentAPI = {
   getAll: () => apiService.getTreatments(),
   getById: (id) => apiService.getTreatment(id),
+  getForAppointments: () => apiService.getAvailableTreatments(), // ✅ NUEVO método
 };
 
 // ============================================================================
@@ -597,7 +645,35 @@ const loadDashboard = async () => {
   }
 };
 
-// EJEMPLO 3: API Principal
+// EJEMPLO 3: VIP
+import { vipAPI } from './services/api';
+
+const loadVIPData = async () => {
+  try {
+    const [benefits, status, testimonials] = await Promise.all([
+      vipAPI.getBenefits(),
+      vipAPI.getStatus(),
+      vipAPI.getTestimonials()
+    ]);
+    console.log('VIP data loaded:', { benefits, status, testimonials });
+  } catch (error) {
+    console.error('VIP error:', error.message);
+  }
+};
+
+// EJEMPLO 4: Appointments
+import { appointmentAPI } from './services/api';
+
+const loadAppointments = async () => {
+  try {
+    const response = await appointmentAPI.getAll();
+    console.log('Appointments:', response.data.appointments);
+  } catch (error) {
+    console.error('Appointments error:', error.message);
+  }
+};
+
+// EJEMPLO 5: API Principal
 import { api } from './services/api';
 
 const checkConnection = async () => {

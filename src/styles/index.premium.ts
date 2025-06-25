@@ -513,50 +513,11 @@ if (__DEV__) {
 export default premiumTheme;
 
 // Named exports for flexibility
-export {
-  premiumTheme,
-  themeVariants,
-  premiumContextHelpers,
-  premiumPresets,
-  designTokens,
-  premiumUtils,
-};
 
 // Re-export individual systems
-export {
-  premiumColors,
-  premiumGradients,
-  premiumHelpers,
-} from './colors.premium';
 
-export {
-  premiumTypographyStyles,
-  premiumTypographyUtils,
-  contextStyles,
-  themedTypography,
-  fontFamilies,
-  premiumWeights,
-  responsiveSizes,
-} from './typography.premium';
 
-export {
-  premiumSpacing,
-  premiumLayout,
-  premiumComponents,
-  premiumAesthetic,
-  premiumSpacingUtils,
-} from './spacing.premium';
 
-export {
-  premiumShadows,
-  premiumButtons,
-  premiumCards,
-  premiumInputs,
-  premiumBadges,
-  premiumChips,
-  premiumLayouts,
-  premiumSpecialized,
-} from './components.premium';
 
 // ============================================================================
 // 🔤 COMPREHENSIVE TYPESCRIPT TYPES
@@ -578,3 +539,12 @@ export type ComponentState = 'idle' | 'hover' | 'pressed' | 'disabled' | 'loadin
 export type ResponsiveSize = 'small' | 'medium' | 'large';
 export type AnimationTiming = keyof typeof premiumUtils.animations.timing;
 export type AnimationEasing = keyof typeof premiumUtils.animations.easing;
+// Exportar todo de una vez
+export {
+  premiumTheme,
+  themeVariants,
+  premiumContextHelpers,
+  premiumPresets,
+  designTokens,
+  premiumUtils,
+};

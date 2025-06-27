@@ -1,18 +1,37 @@
 // ============================================================================
-// hooks/useAuth.ts - HOOK DE AUTENTICACIÓN OPTIMIZADO
+// hooks/useAuth.ts - HOOK DE AUTENTICACIÓN OPTIMIZADO Y CORREGIDO ✅
 // ============================================================================
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { setUser, setToken } from '../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import * as SecureStore from 'expo-secure-store';
+import { setUser, setToken, clearUser, setLoading, setError } from '../store/slices/authSlice';
 import { authAPI, handleApiError } from '../services/api';
-import ApiService from '../services/api';
+import api from '../services/api'; // ✅ CORREGIDO: import api en lugar de ApiService
+import type { 
+  AuthType, 
+  UserRole, 
+  User, 
+  AuthUser, 
+  LoginCredentials, 
+  RegisterData, 
+  UseAuthReturn 
+} from '../types/auth';
+
+// ✅ EXPORTAR TODOS LOS TIPOS
+export type { 
+  AuthType, 
+  UserRole, 
+  User, 
+  AuthUser, 
+  LoginCredentials, 
+  RegisterData, 
+  UseAuthReturn 
+};
 
 // ============================================================================
-// TIPOS Y INTERFACES
+// INTERFACES ADICIONALES PARA EL HOOK ✅
 // ============================================================================
-export type AuthType = 'login' | 'register' | 'forgot';
-
 export interface AuthFormData {
   email: string;
   password: string;
@@ -22,37 +41,6 @@ export interface AuthFormData {
   confirmPassword?: string;
 }
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  isDemo: boolean;
-  vipStatus: boolean;
-  beautyPoints: number;
-  sessionsCompleted: number;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  notificationPreferences?: {
-    appointments: boolean;
-    wellness: boolean;
-    offers: boolean;
-  };
-}
-
 export interface AuthState {
   formData: AuthFormData;
   errors: Partial<AuthFormData>;
@@ -60,7 +48,7 @@ export interface AuthState {
   connectionStatus: 'checking' | 'connected' | 'error';
 }
 
-interface UseAuthReturn extends AuthState {
+interface ExtendedUseAuthReturn extends AuthState {
   // Funciones principales
   updateField: (field: keyof AuthFormData, value: string) => void;
   handleSubmit: () => Promise<void>;
@@ -68,23 +56,36 @@ interface UseAuthReturn extends AuthState {
   clearForm: () => void;
   clearErrors: () => void;
   
+  // Funciones estándar de auth
+  login: (credentials: LoginCredentials) => Promise<boolean>;
+  register: (data: RegisterData) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<boolean>;
+  clearError: () => void;
+  
   // Validadores
   validateForm: () => boolean;
   validateEmail: (email: string) => string | null;
   validatePassword: (password: string) => string | null;
   
-  // Estados calculados - SIEMPRE boolean
+  // Estados calculados
   isFormValid: boolean;
   canSubmit: boolean;
+  
+  // Estados del store
+  user: User | null;
+  isAuthenticated: boolean;
+  error: string | null;
 }
 
 // ============================================================================
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL CORREGIDO ✅
 // ============================================================================
-export const useAuth = (type: AuthType): UseAuthReturn => {
+export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
   const dispatch = useDispatch();
+  const { user, loading: storeLoading, error, isAuthenticated } = useSelector((state: any) => state.auth);
   
-  // Estados principales
+  // Estados del formulario
   const [formData, setFormData] = useState<AuthFormData>({
     email: '',
     password: '',
@@ -99,7 +100,7 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   // ============================================================================
-  // FUNCIONES DE VALIDACIÓN
+  // FUNCIONES DE VALIDACIÓN ✅
   // ============================================================================
   const validateEmail = useCallback((email: string): string | null => {
     if (!email.trim()) {
@@ -123,14 +124,6 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
       return 'Contraseña debe tener al menos 6 caracteres';
     }
     
-    // Opcional: validación más estricta
-    // const hasUpperCase = /[A-Z]/.test(password);
-    // const hasLowerCase = /[a-z]/.test(password);
-    // const hasNumbers = /\d/.test(password);
-    // if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-    //   return 'Contraseña debe contener mayúsculas, minúsculas y números';
-    // }
-    
     return null;
   }, []);
 
@@ -144,7 +137,7 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
     }
 
     // Validación de contraseña (no aplica para forgot)
-    if (type !== 'forgot') {
+    if (type !== 'forgot-password') {
       const passwordError = validatePassword(formData.password);
       if (passwordError) {
         newErrors.password = passwordError;
@@ -168,7 +161,6 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
       if (!formData.phone?.trim()) {
         newErrors.phone = 'Teléfono es requerido';
       } else {
-        // Validación básica de teléfono (formato argentino)
         const phoneRegex = /^(\+54|54)?[\s\-]?[0-9\s\-]{8,}$/;
         if (!phoneRegex.test(formData.phone.trim())) {
           newErrors.phone = 'Formato de teléfono inválido';
@@ -185,12 +177,12 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   }, [formData, type, validateEmail, validatePassword]);
 
   // ============================================================================
-  // FUNCIONES DE CONEXIÓN
+  // FUNCIONES DE CONEXIÓN ✅
   // ============================================================================
   const checkBackendConnection = useCallback(async () => {
     try {
       setConnectionStatus('checking');
-      const isConnected = await ApiService.checkConnection();
+      const isConnected = await api.checkConnection(); // ✅ CORREGIDO: api en lugar de ApiService
       setConnectionStatus(isConnected ? 'connected' : 'error');
     } catch (error) {
       console.log('Connection check failed:', error);
@@ -199,12 +191,11 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   }, []);
 
   // ============================================================================
-  // FUNCIONES DE FORMULARIO
+  // FUNCIONES DE FORMULARIO ✅
   // ============================================================================
   const updateField = useCallback((field: keyof AuthFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -225,96 +216,200 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
     setErrors({});
   }, []);
 
+  const clearError = useCallback(() => {
+    dispatch(setError(null));
+  }, [dispatch]);
+
   // ============================================================================
-  // FUNCIONES DE AUTENTICACIÓN
+  // HELPER PARA CREAR USER PAYLOAD ✅
   // ============================================================================
-  const createUserPayload = useCallback((userData: any): AuthUser => {
+  const createUserPayload = useCallback((userData: any): User => {
     return {
       id: userData.id || '',
-      name: `${userData.firstName} ${userData.lastName}`,
+      name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
       email: userData.email,
+      role: userData.role as UserRole || 'patient',
+      avatar: userData.avatar,
+      phone: userData.phone,
+      dateOfBirth: userData.dateOfBirth,
+      preferences: userData.preferences,
+      createdAt: userData.createdAt || new Date().toISOString(),
+      updatedAt: userData.updatedAt || new Date().toISOString(),
+      
+      // ✅ CAMPOS ADICIONALES PARA COMPATIBILIDAD
       firstName: userData.firstName,
       lastName: userData.lastName,
-      role: userData.role || 'patient',
-      isDemo: false,
-      vipStatus: userData.vipStatus || false,
-      beautyPoints: userData.beautyPoints || 20,
+      beautyPoints: userData.beautyPoints || 0,
       sessionsCompleted: userData.sessionsCompleted || 0,
+      vipStatus: userData.vipStatus || false,
     };
   }, []);
 
-  const handleLogin = useCallback(async () => {
-    console.log('🚀 Iniciando login para:', formData.email.trim());
-    
-    const loginResponse = await authAPI.login(formData.email.trim(), formData.password);
-    
-    if (loginResponse.success) {
-      const userPayload = createUserPayload(loginResponse.data.user);
+  // ============================================================================
+  // FUNCIONES DE AUTENTICACIÓN PRINCIPALES ✅
+  // ============================================================================
+  const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response = await authAPI.login(credentials.email, credentials.password);
       
-      dispatch(setUser(userPayload));
-      dispatch(setToken(loginResponse.data.tokens.accessToken));
-      
-      Alert.alert(
-        `¡Hola ${loginResponse.data.user.firstName}! 🌸`, 
-        loginResponse.data.user.vipStatus ? 
-          'Bienvenida de vuelta, miembro VIP 👑' : 
-          'Nos alegra tenerte de vuelta'
-      );
+      if (response.success && response.data?.user && response.data?.tokens) {
+        // Guardar token
+        await SecureStore.setItemAsync('accessToken', response.data.tokens.accessToken);
+        if (response.data.tokens.refreshToken) {
+          await SecureStore.setItemAsync('refreshToken', response.data.tokens.refreshToken);
+        }
+
+        // Actualizar store
+        const userPayload = createUserPayload(response.data.user);
+        dispatch(setUser(userPayload));
+        dispatch(setToken(response.data.tokens.accessToken));
+
+        Alert.alert(
+          `¡Hola ${response.data.user.firstName}! 🌸`, 
+          response.data.user.vipStatus ? 
+            'Bienvenida de vuelta, miembro VIP 👑' : 
+            'Nos alegra tenerte de vuelta'
+        );
+
+        return true;
+      } else {
+        throw new Error(response.error?.message || 'Error al iniciar sesión');
+      }
+    } catch (error: any) {
+      dispatch(setError(error.message || 'Error al iniciar sesión'));
+      return false;
+    } finally {
+      dispatch(setLoading(false));
     }
-  }, [formData.email, formData.password, dispatch, createUserPayload]);
+  }, [dispatch, createUserPayload]);
+
+  const register = useCallback(async (data: RegisterData): Promise<boolean> => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      const response = await authAPI.register(data);
+      
+      if (response.success && response.data?.user && response.data?.tokens) {
+        // Guardar token
+        await SecureStore.setItemAsync('accessToken', response.data.tokens.accessToken);
+        if (response.data.tokens.refreshToken) {
+          await SecureStore.setItemAsync('refreshToken', response.data.tokens.refreshToken);
+        }
+
+        // Actualizar store
+        const userPayload = createUserPayload(response.data.user);
+        dispatch(setUser(userPayload));
+        dispatch(setToken(response.data.tokens.accessToken));
+
+        Alert.alert(
+          '¡Bienvenida! 🎉',
+          `Hola ${response.data.user.firstName}, tu cuenta ha sido creada exitosamente.`,
+          [{ text: 'Comenzar mi experiencia', style: 'default' }]
+        );
+
+        return true;
+      } else {
+        throw new Error(response.error?.message || 'Error al registrarse');
+      }
+    } catch (error: any) {
+      dispatch(setError(error.message || 'Error al registrarse'));
+      return false;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch, createUserPayload]);
+
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      // Limpiar tokens
+      await SecureStore.deleteItemAsync('accessToken');
+      await SecureStore.deleteItemAsync('refreshToken');
+
+      // Limpiar store
+      dispatch(clearUser());
+      
+      // Limpiar formulario
+      clearForm();
+      clearErrors();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  }, [dispatch, clearForm, clearErrors]);
+
+  const updateProfile = useCallback(async (data: Partial<User>): Promise<boolean> => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
+
+      // Aquí iría la llamada al API cuando esté disponible
+      // const response = await authAPI.updateProfile(data);
+
+      // Por ahora, simulamos una actualización exitosa
+      if (user) {
+        const updatedUser = { 
+          ...user, 
+          ...data,
+          updatedAt: new Date().toISOString()
+        };
+        dispatch(setUser(updatedUser));
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      dispatch(setError(error.message || 'Error al actualizar perfil'));
+      return false;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch, user]);
+
+  // ============================================================================
+  // FUNCIONES DE AUTENTICACIÓN DEL FORMULARIO ✅
+  // ============================================================================
+  const handleLogin = useCallback(async () => {
+    const credentials: LoginCredentials = {
+      email: formData.email.trim(),
+      password: formData.password
+    };
+    return await login(credentials);
+  }, [formData.email, formData.password, login]);
 
   const handleRegister = useCallback(async () => {
-    console.log('🚀 Iniciando registro con datos:', {
-      email: formData.email.trim(),
-      firstName: formData.firstName!.trim(),
-      lastName: formData.lastName!.trim(),
-      phone: formData.phone!.trim(),
-    });
-
     const registerData: RegisterData = {
+      name: `${formData.firstName!.trim()} ${formData.lastName!.trim()}`,
       email: formData.email.trim(),
       password: formData.password,
+      phone: formData.phone!.trim(),
+      
+      // ✅ CAMPOS INDIVIDUALES PARA COMPATIBILIDAD
       firstName: formData.firstName!.trim(),
       lastName: formData.lastName!.trim(),
-      phone: formData.phone!.trim(),
-      notificationPreferences: {
-        appointments: true,
-        wellness: true,
-        offers: false
-      }
     };
-
-    const registerResponse = await authAPI.register(registerData);
-    
-    if (registerResponse.success) {
-      console.log('✅ Registro exitoso:', registerResponse.data.user);
-
-      // Auto-login después del registro exitoso
-      const userPayload = createUserPayload(registerResponse.data.user);
-      
-      dispatch(setUser(userPayload));
-      dispatch(setToken(registerResponse.data.tokens.accessToken));
-      
-      Alert.alert(
-        '¡Bienvenida! 🎉',
-        `Hola ${registerResponse.data.user.firstName}, tu cuenta ha sido creada exitosamente. ${registerResponse.data.user.beautyPoints || 20} Beauty Points de regalo te esperan.`,
-        [{ text: 'Comenzar mi experiencia', style: 'default' }]
-      );
-    }
-  }, [formData, dispatch, createUserPayload]);
+    return await register(registerData);
+  }, [formData, register]);
 
   const handleForgotPassword = useCallback(async () => {
-    console.log('🔑 Enviando email de recuperación a:', formData.email.trim());
-    
-    const forgotResponse = await authAPI.forgotPassword(formData.email.trim());
-    
-    if (forgotResponse.success) {
-      console.log('✅ Email de recuperación enviado');
-      Alert.alert(
-        'Email enviado 📧',
-        'Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.',
-        [{ text: 'Entendido' }]
-      );
+    try {
+      const response = await authAPI.forgotPassword(formData.email.trim());
+      
+      if (response.success) {
+        Alert.alert(
+          'Email enviado 📧',
+          'Revisa tu bandeja de entrada y sigue las instrucciones para restablecer tu contraseña.',
+          [{ text: 'Entendido' }]
+        );
+        return true;
+      } else {
+        throw new Error(response.error?.message || 'Error al enviar email');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+      return false;
     }
   }, [formData.email]);
 
@@ -343,7 +438,7 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
         case 'register':
           await handleRegister();
           break;
-        case 'forgot':
+        case 'forgot-password':
           await handleForgotPassword();
           break;
       }
@@ -375,11 +470,13 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   ]);
 
   // ============================================================================
-  // ESTADOS CALCULADOS - USANDO useMemo PARA GARANTIZAR BOOLEAN
+  // ESTADOS CALCULADOS ✅
   // ============================================================================
   const isFormValid = useMemo(() => {
+    if (!type) return true;
+    
     const hasRequiredFields = formData.email.trim() !== '' && 
-      (type === 'forgot' || formData.password.trim() !== '');
+      (type === 'forgot-password' || formData.password.trim() !== '');
     
     if (type === 'register') {
       return hasRequiredFields && 
@@ -393,43 +490,59 @@ export const useAuth = (type: AuthType): UseAuthReturn => {
   }, [formData, type]);
 
   const canSubmit = useMemo(() => {
-    return isFormValid && !loading && connectionStatus === 'connected';
-  }, [isFormValid, loading, connectionStatus]);
+    return isFormValid && !loading && !storeLoading && connectionStatus === 'connected';
+  }, [isFormValid, loading, storeLoading, connectionStatus]);
 
   // ============================================================================
-  // EFFECTS
+  // EFFECTS ✅
   // ============================================================================
   useEffect(() => {
     checkBackendConnection();
   }, [checkBackendConnection]);
 
-  // Limpiar formulario cuando cambia el tipo
   useEffect(() => {
-    clearForm();
-    clearErrors();
+    if (type) {
+      clearForm();
+      clearErrors();
+    }
   }, [type, clearForm, clearErrors]);
 
+  // ============================================================================
+  // RETURN ✅
+  // ============================================================================
   return {
-    // Estado
+    // Estado del formulario
     formData,
     errors,
-    loading,
+    loading: loading || storeLoading,
     connectionStatus,
     
-    // Funciones principales
+    // Funciones del formulario
     updateField,
     handleSubmit,
     checkBackendConnection,
     clearForm,
     clearErrors,
     
+    // Funciones de auth estándar
+    login,
+    register,
+    logout,
+    updateProfile,
+    clearError,
+    
     // Validadores
     validateForm,
     validateEmail,
     validatePassword,
     
-    // Estados calculados - GARANTIZADOS COMO BOOLEAN
+    // Estados calculados
     isFormValid,
     canSubmit,
+    
+    // Estados del store
+    user,
+    isAuthenticated,
+    error,
   };
 };

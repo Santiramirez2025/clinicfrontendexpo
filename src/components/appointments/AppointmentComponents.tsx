@@ -1,11 +1,83 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { modernColors, modernTypography, modernShadows } from '../../styles';
-import type { Appointment, TabType, AppointmentStatus } from '../../hooks/useAppointments';
+import { modernColors, modernTypography } from '../../styles/colors';
+import type { AppointmentStatus, TabType } from '../../types/auth';
 
 // ============================================================================
-// TAB SELECTOR
+// INTERFACES CORREGIDAS ✅
+// ============================================================================
+
+// Appointment extendida con campos que usa tu app
+interface AppointmentExtended {
+  id: string;
+  treatmentId: string;
+  professionalId?: string;
+  date: string;
+  time: string;
+  status: AppointmentStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Campos adicionales renderizables
+  treatment?: string | { name: string }; // ✅ String o objeto
+  professional?: string | { name: string }; // ✅ String o objeto
+  clinic?: string;
+  duration?: number;
+  price?: number;
+  rating?: number;
+  isVipExclusive?: boolean;
+}
+
+// ============================================================================
+// HELPERS SEGUROS PARA RENDERIZADO ✅
+// ============================================================================
+
+const renderTreatmentName = (treatment?: string | { name: string }): string => {
+  if (typeof treatment === 'string') return treatment;
+  if (treatment && typeof treatment === 'object' && 'name' in treatment) return treatment.name;
+  return 'Sin tratamiento';
+};
+
+const renderProfessionalName = (professional?: string | { name: string }): string => {
+  if (typeof professional === 'string') return professional;
+  if (professional && typeof professional === 'object' && 'name' in professional) return professional.name;
+  return 'Sin profesional';
+};
+
+const getStatusColor = (status: AppointmentStatus): string => {
+  switch (status) {
+    case 'CONFIRMED': return modernColors.success;
+    case 'PENDING': return modernColors.warning;
+    case 'CANCELLED': return modernColors.error;
+    case 'COMPLETED': return modernColors.info;
+    default: return modernColors.textSecondary;
+  }
+};
+
+const getStatusText = (status: AppointmentStatus): string => {
+  switch (status) {
+    case 'CONFIRMED': return 'Confirmado';
+    case 'PENDING': return 'Pendiente';
+    case 'CANCELLED': return 'Cancelado';
+    case 'COMPLETED': return 'Completado';
+    default: return 'Desconocido';
+  }
+};
+
+const getStatusIcon = (status: AppointmentStatus): keyof typeof Ionicons.glyphMap => {
+  switch (status) {
+    case 'CONFIRMED': return 'checkmark-circle';
+    case 'PENDING': return 'time';
+    case 'CANCELLED': return 'close-circle';
+    case 'COMPLETED': return 'checkmark-circle';
+    default: return 'help-circle';
+  }
+};
+
+// ============================================================================
+// TAB SELECTOR ✅
 // ============================================================================
 interface TabSelectorProps {
   activeTab: TabType;
@@ -34,10 +106,10 @@ export const TabSelector = ({ activeTab, onTabChange }: TabSelectorProps) => (
 );
 
 // ============================================================================
-// APPOINTMENT CARD
+// APPOINTMENT CARD ✅
 // ============================================================================
 interface AppointmentCardProps {
-  appointment: Appointment;
+  appointment: AppointmentExtended;
   onPress: () => void;
   onCancel?: () => void;
   onReschedule?: () => void;
@@ -53,36 +125,6 @@ export const AppointmentCard = ({
   formatDate,
   formatTime 
 }: AppointmentCardProps) => {
-  const getStatusColor = (status: AppointmentStatus) => {
-    switch (status) {
-      case 'CONFIRMED': return modernColors.success;
-      case 'PENDING': return modernColors.warning;
-      case 'CANCELLED': return modernColors.error;
-      case 'COMPLETED': return modernColors.info;
-      default: return modernColors.gray400;
-    }
-  };
-
-  const getStatusText = (status: AppointmentStatus) => {
-    switch (status) {
-      case 'CONFIRMED': return 'Confirmado';
-      case 'PENDING': return 'Pendiente';
-      case 'CANCELLED': return 'Cancelado';
-      case 'COMPLETED': return 'Completado';
-      default: return status;
-    }
-  };
-
-  const getStatusIcon = (status: AppointmentStatus) => {
-    switch (status) {
-      case 'CONFIRMED': return 'checkmark-circle';
-      case 'PENDING': return 'time';
-      case 'CANCELLED': return 'close-circle';
-      case 'COMPLETED': return 'checkmark-circle';
-      default: return 'help-circle';
-    }
-  };
-
   const canCancel = appointment.status === 'CONFIRMED' || appointment.status === 'PENDING';
   const canReschedule = appointment.status === 'CONFIRMED' || appointment.status === 'PENDING';
 
@@ -110,7 +152,10 @@ export const AppointmentCard = ({
       {/* Información del tratamiento */}
       <View style={styles.cardBody}>
         <View style={styles.treatmentInfo}>
-          <Text style={styles.treatmentName}>{appointment.treatment}</Text>
+          {/* ✅ RENDERIZADO SEGURO */}
+          <Text style={styles.treatmentName}>
+            {renderTreatmentName(appointment.treatment)}
+          </Text>
           {appointment.isVipExclusive && (
             <View style={styles.vipBadge}>
               <Ionicons name="diamond" size={10} color={modernColors.accent} />
@@ -120,19 +165,24 @@ export const AppointmentCard = ({
         </View>
         
         <View style={styles.professionalInfo}>
-          <Ionicons name="person" size={14} color={modernColors.gray500} />
-          <Text style={styles.professionalName}>{appointment.professional}</Text>
+          <Ionicons name="person" size={14} color={modernColors.textSecondary} />
+          {/* ✅ RENDERIZADO SEGURO */}
+          <Text style={styles.professionalName}>
+            {renderProfessionalName(appointment.professional)}
+          </Text>
         </View>
         
-        <View style={styles.clinicInfo}>
-          <Ionicons name="location" size={14} color={modernColors.gray500} />
-          <Text style={styles.clinicName}>{appointment.clinic}</Text>
-        </View>
+        {appointment.clinic && (
+          <View style={styles.clinicInfo}>
+            <Ionicons name="location" size={14} color={modernColors.textSecondary} />
+            <Text style={styles.clinicName}>{appointment.clinic}</Text>
+          </View>
+        )}
 
         {/* Información adicional */}
         {appointment.duration && (
           <View style={styles.additionalInfo}>
-            <Ionicons name="time" size={14} color={modernColors.gray500} />
+            <Ionicons name="time" size={14} color={modernColors.textSecondary} />
             <Text style={styles.durationText}>{appointment.duration} min</Text>
             {appointment.price && (
               <>
@@ -193,7 +243,7 @@ export const AppointmentCard = ({
 };
 
 // ============================================================================
-// EMPTY STATE
+// EMPTY STATE ✅
 // ============================================================================
 interface EmptyStateProps {
   type: TabType;
@@ -223,7 +273,7 @@ export const EmptyState = ({ type, onNewAppointment }: EmptyStateProps) => (
 );
 
 // ============================================================================
-// FLOATING ACTION BUTTON
+// FLOATING ACTION BUTTON ✅
 // ============================================================================
 interface FloatingActionButtonProps {
   onPress: () => void;
@@ -231,17 +281,17 @@ interface FloatingActionButtonProps {
 
 export const FloatingActionButton = ({ onPress }: FloatingActionButtonProps) => (
   <TouchableOpacity style={styles.fab} onPress={onPress}>
-    <Ionicons name="add" size={24} color={modernColors.white} />
+    <Ionicons name="add" size={24} color={modernColors.textInverse} />
   </TouchableOpacity>
 );
 
 // ============================================================================
-// ESTILOS
+// ESTILOS CORREGIDOS ✅
 // ============================================================================
-const styles = {
+const styles = StyleSheet.create({
   tabContainer: {
-    flexDirection: 'row' as const,
-    backgroundColor: modernColors.gray100,
+    flexDirection: 'row',
+    backgroundColor: modernColors.backgroundCool,
     margin: 16,
     borderRadius: 12,
     padding: 4,
@@ -251,32 +301,40 @@ const styles = {
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    alignItems: 'center' as const,
+    alignItems: 'center',
   },
   activeTab: {
     backgroundColor: modernColors.surface,
-    ...modernShadows.small,
+    shadowColor: modernColors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabText: {
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '500' as const,
-    color: modernColors.gray600,
+    fontWeight: '500',
+    color: modernColors.textSecondary,
   },
   activeTabText: {
     color: modernColors.primary,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
   appointmentCard: {
     backgroundColor: modernColors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    ...modernShadows.medium,
+    shadowColor: modernColors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
   },
   cardHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'flex-start' as const,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
   dateSection: {
@@ -284,46 +342,46 @@ const styles = {
   },
   cardDate: {
     fontSize: modernTypography.fontSizeModern.lg,
-    fontWeight: '600' as const,
-    color: modernColors.text,
+    fontWeight: '600',
+    color: modernColors.textPrimary,
     marginBottom: 2,
   },
   cardTime: {
     fontSize: modernTypography.fontSizeModern.base,
     color: modernColors.primary,
-    fontWeight: '500' as const,
+    fontWeight: '500',
   },
   statusBadge: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   statusText: {
     fontSize: modernTypography.fontSizeModern.sm,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     marginLeft: 4,
   },
   cardBody: {
     borderTopWidth: 1,
-    borderTopColor: modernColors.gray200,
+    borderTopColor: modernColors.border,
     paddingTop: 16,
   },
   treatmentInfo: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   treatmentName: {
     fontSize: modernTypography.fontSizeModern.lg,
-    fontWeight: '600' as const,
-    color: modernColors.text,
+    fontWeight: '600',
+    color: modernColors.textPrimary,
     flex: 1,
   },
   vipBadge: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: modernColors.accent + '20',
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -333,68 +391,68 @@ const styles = {
   vipText: {
     fontSize: modernTypography.fontSizeModern.xs,
     color: modernColors.accent,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     marginLeft: 2,
   },
   professionalInfo: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   professionalName: {
     fontSize: modernTypography.fontSizeModern.base,
-    color: modernColors.gray700,
+    color: modernColors.textSecondary,
     marginLeft: 6,
   },
   clinicInfo: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   clinicName: {
     fontSize: modernTypography.fontSizeModern.base,
-    color: modernColors.gray700,
+    color: modernColors.textSecondary,
     marginLeft: 6,
   },
   additionalInfo: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   durationText: {
     fontSize: modernTypography.fontSizeModern.sm,
-    color: modernColors.gray600,
+    color: modernColors.textSecondary,
     marginLeft: 4,
   },
   separator: {
     fontSize: modernTypography.fontSizeModern.sm,
-    color: modernColors.gray400,
+    color: modernColors.textTertiary,
     marginHorizontal: 8,
   },
   priceText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.success,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
   ratingContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   cardActions: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-around' as const,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: modernColors.gray200,
+    borderTopColor: modernColors.border,
   },
   actionButton: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: modernColors.gray100,
+    backgroundColor: modernColors.backgroundCool,
   },
   cancelButton: {
     backgroundColor: modernColors.error + '10',
@@ -402,13 +460,13 @@ const styles = {
   actionText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.primary,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     marginLeft: 4,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingVertical: 60,
     paddingHorizontal: 20,
   },
@@ -418,15 +476,15 @@ const styles = {
   },
   emptyTitle: {
     fontSize: modernTypography.fontSizeModern.xl,
-    fontWeight: '600' as const,
-    color: modernColors.text,
-    textAlign: 'center' as const,
+    fontWeight: '600',
+    color: modernColors.textPrimary,
+    textAlign: 'center',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: modernTypography.fontSizeModern.base,
-    color: modernColors.gray600,
-    textAlign: 'center' as const,
+    color: modernColors.textSecondary,
+    textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
   },
@@ -437,20 +495,26 @@ const styles = {
     borderRadius: 8,
   },
   emptyButtonText: {
-    color: modernColors.white,
+    color: modernColors.textInverse,
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
   fab: {
-    position: 'absolute' as const,
+    position: 'absolute',
     bottom: 24,
     right: 24,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: modernColors.primary,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    ...modernShadows.large,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: modernColors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 16,
   },
-};
+});
+
+export default AppointmentCard;

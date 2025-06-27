@@ -4,12 +4,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
 import { setUser } from '../store/slices/authSlice';
-import { profileAPI, handleApiError } from '../services/api'; // ✅ Usar API existente
+import { profileAPI, handleApiError } from '../services/api';
+
+// ✅ IMPORTAR TIPOS DESDE auth.ts PARA CONSISTENCIA
+import type { User } from '../types/auth';
 
 // ============================================================================
-// INTERFACES Y TIPOS
+// INTERFACES Y TIPOS ✅
 // ============================================================================
 export interface UserProfile {
   id: string;
@@ -28,7 +30,7 @@ export interface NotificationSettings {
   appointments: boolean;
   promotions: boolean;
   wellness: boolean;
-  offers: boolean; // ✅ Campo correcto según tu backend
+  offers: boolean;
 }
 
 export interface UseProfileReturn {
@@ -40,7 +42,7 @@ export interface UseProfileReturn {
   refreshing: boolean;
   hasUnsavedChanges: boolean;
   errors: Record<string, string>;
-  user: ReturnType<typeof getSafeUser> | null;
+  user: User | null; // ✅ USAR TIPO User CONSISTENTE
   error: string | null;
   
   // Funciones principales
@@ -57,51 +59,39 @@ export interface UseProfileReturn {
 }
 
 // ============================================================================
-// TIPOS DE USUARIO
+// INTERFACE PARA ROOTSTATE ✅
 // ============================================================================
-interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  isDemo: boolean;
-  vipStatus: boolean;
-  beautyPoints: number;
-  totalInvestment?: number;
-  sessionsCompleted: number;
-  memberSince?: string;
+interface RootState {
+  auth: {
+    user: User | null;
+    isAuthenticated: boolean;
+    loading: boolean;
+    error: string | null;
+  };
 }
 
 // ============================================================================
-// FUNCIÓN HELPER PARA USUARIO SEGURO
+// FUNCIÓN HELPER PARA USUARIO SEGURO ✅
 // ============================================================================
-const getSafeUser = (user: AuthUser | null, profile: UserProfile): AuthUser | null => {
+const getSafeUser = (user: User | null, profile: UserProfile): User | null => {
   if (!user || !user.id) return null;
   
   return {
-    id: user.id,
-    email: user.email || profile.email || '',
+    ...user, // ✅ MANTENER TODOS LOS CAMPOS DEL USER ORIGINAL
     name: user.name || `${profile.firstName} ${profile.lastName}`.trim(),
-    firstName: user.firstName || profile.firstName,
-    lastName: user.lastName || profile.lastName,
-    role: user.role || 'user',
-    isDemo: user.isDemo || false,
-    vipStatus: user.vipStatus || false,
-    beautyPoints: user.beautyPoints || 0,
-    totalInvestment: user.totalInvestment || 0,
-    sessionsCompleted: user.sessionsCompleted || 0,
-    memberSince: user.memberSince || new Date().toISOString(),
+    firstName: profile.firstName || user.firstName,
+    lastName: profile.lastName || user.lastName,
+    email: profile.email || user.email,
+    updatedAt: new Date().toISOString(), // ✅ ACTUALIZAR TIMESTAMP
   };
 };
 
 // ============================================================================
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL ✅
 // ============================================================================
 export const useProfile = (): UseProfileReturn => {
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user) as AuthUser | null;
+  const user = useSelector((state: RootState) => state.auth.user);
 
   // Estado inicial del perfil
   const initialProfile = useMemo<UserProfile>(() => ({
@@ -121,7 +111,7 @@ export const useProfile = (): UseProfileReturn => {
     appointments: true,
     promotions: false,
     wellness: true,
-    offers: false // ✅ Campo correcto
+    offers: false
   });
 
   // Estados de carga
@@ -134,7 +124,7 @@ export const useProfile = (): UseProfileReturn => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ============================================================================
-  // FUNCIONES DE VALIDACIÓN
+  // FUNCIONES DE VALIDACIÓN ✅
   // ============================================================================
   const validateEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -142,7 +132,8 @@ export const useProfile = (): UseProfileReturn => {
   }, []);
 
   const validatePhone = useCallback((phone: string): boolean => {
-    const phoneRegex = /^(\+34|0034|34)?[6789]\d{8}$/;
+    // ✅ REGEX PARA TELÉFONOS ARGENTINOS Y ESPAÑOLES
+    const phoneRegex = /^(\+54|54|\+34|34)?[\s\-]?[6789]\d{8,}$/;
     return phoneRegex.test(phone.replace(/\s/g, ''));
   }, []);
 
@@ -164,7 +155,7 @@ export const useProfile = (): UseProfileReturn => {
     }
 
     if (profile.phone && !validatePhone(profile.phone)) {
-      newErrors.phone = 'Teléfono inválido (formato español)';
+      newErrors.phone = 'Teléfono inválido';
     }
 
     setErrors(newErrors);
@@ -172,17 +163,17 @@ export const useProfile = (): UseProfileReturn => {
   }, [profile, validateEmail, validatePhone]);
 
   // ============================================================================
-  // FUNCIONES DE API - ✅ USANDO API EXISTENTE
+  // FUNCIONES DE API ✅
   // ============================================================================
   const loadProfile = useCallback(async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
       
       console.log('📋 Cargando perfil del usuario...');
-      const response = await profileAPI.get(); // ✅ Usar API existente
+      const response = await profileAPI.get();
       
       if (response.success && response.data) {
-        const userData = response.data.user;
+        const userData = response.data.user || response.data;
         const userPreferences = response.data.preferences || {};
         
         console.log('✅ Perfil cargado:', userData);
@@ -196,25 +187,27 @@ export const useProfile = (): UseProfileReturn => {
           phone: userData.phone || '',
           birthDate: userData.birthDate || '',
           skinType: userData.skinType,
-          // Estos campos son locales por ahora
-          treatmentPreferences: [],
-          preferredSchedule: [],
-          notes: ''
+          treatmentPreferences: userData.treatmentPreferences || [],
+          preferredSchedule: userData.preferredSchedule || [],
+          notes: userData.notes || ''
         });
 
-        // ✅ CORREGIDO: Usar campos correctos del backend
         setNotifications({
           appointments: userPreferences.appointments ?? true,
           promotions: userPreferences.promotions ?? false,
           wellness: userPreferences.wellness ?? true,
-          offers: userPreferences.offers ?? false // ✅ Campo correcto
+          offers: userPreferences.offers ?? false
         });
       }
     } catch (error) {
       console.error('❌ Error loading profile:', error);
       const errorMessage = handleApiError(error, 'No se pudo cargar el perfil');
       setErrors(prev => ({ ...prev, general: errorMessage }));
-      Alert.alert('Error', errorMessage);
+      
+      // ✅ NO MOSTRAR ALERT SI ES REFRESH SILENCIOSO
+      if (!isRefresh) {
+        Alert.alert('Error', errorMessage);
+      }
     } finally {
       setLoading(false);
       if (isRefresh) setRefreshing(false);
@@ -238,34 +231,29 @@ export const useProfile = (): UseProfileReturn => {
         phone: profile.phone.trim(),
         skinType: profile.skinType,
         birthDate: profile.birthDate,
+        treatmentPreferences: profile.treatmentPreferences,
+        preferredSchedule: profile.preferredSchedule,
+        notes: profile.notes,
       };
 
       console.log('📤 Datos a enviar:', profileData);
       
-      const response = await profileAPI.update(profileData); // ✅ Usar API existente
+      const response = await profileAPI.update(profileData);
 
       if (response.success) {
         console.log('✅ Perfil guardado exitosamente');
         
-        // Actualizar usuario en Redux
+        // ✅ ACTUALIZAR USUARIO EN REDUX CON TIPO CORRECTO
         if (user && user.id) {
-          const updatedUser: AuthUser = {
-            ...user,
-            id: user.id,
+          const updatedUser: User = {
+            ...user, // ✅ MANTENER TODOS LOS CAMPOS ORIGINALES
             firstName: profile.firstName.trim(),
             lastName: profile.lastName.trim(),
             name: `${profile.firstName.trim()} ${profile.lastName.trim()}`,
-            email: user.email,
-            role: user.role || 'user',
-            isDemo: user.isDemo || false,
-            vipStatus: user.vipStatus || false,
-            beautyPoints: user.beautyPoints || 0,
-            totalInvestment: user.totalInvestment || 0,
-            sessionsCompleted: user.sessionsCompleted || 0,
-            memberSince: user.memberSince || new Date().toISOString(),
+            updatedAt: new Date().toISOString(), // ✅ ACTUALIZAR TIMESTAMP
           };
 
-          dispatch(setUser(updatedUser));
+          dispatch(setUser(updatedUser)); // ✅ SIN return
         }
 
         setHasUnsavedChanges(false);
@@ -285,7 +273,7 @@ export const useProfile = (): UseProfileReturn => {
     try {
       console.log('🔔 Actualizando notificaciones:', newSettings);
       
-      const response = await profileAPI.updateNotifications(newSettings); // ✅ Usar API existente
+      const response = await profileAPI.updateNotifications(newSettings);
       
       if (response.success) {
         console.log('✅ Notificaciones actualizadas');
@@ -299,7 +287,7 @@ export const useProfile = (): UseProfileReturn => {
   }, []);
 
   // ============================================================================
-  // HANDLERS
+  // HANDLERS ✅
   // ============================================================================
   const handleProfileChange = useCallback((field: keyof UserProfile, value: any) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -332,18 +320,18 @@ export const useProfile = (): UseProfileReturn => {
   }, []);
 
   // ============================================================================
-  // VALOR COMPUTADO PARA USUARIO SEGURO
+  // VALOR COMPUTADO PARA USUARIO SEGURO ✅
   // ============================================================================
   const safeUser = useMemo(() => getSafeUser(user, profile), [user, profile]);
 
   // ============================================================================
-  // EFFECTS
+  // EFFECTS ✅
   // ============================================================================
   useEffect(() => {
     if (user?.id) {
       loadProfile();
     }
-  }, [user?.id]);
+  }, [user?.id, loadProfile]);
 
   // Actualizar perfil cuando cambia el usuario
   useEffect(() => {
@@ -359,7 +347,7 @@ export const useProfile = (): UseProfileReturn => {
   }, [user]);
 
   // ============================================================================
-  // RETURN
+  // RETURN ✅
   // ============================================================================
   return {
     // Estados

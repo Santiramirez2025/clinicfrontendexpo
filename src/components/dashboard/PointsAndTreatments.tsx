@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, DimensionValue } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { modernColors, modernTypography, modernShadows } from '../../styles';
 
@@ -79,7 +79,7 @@ const BeautyPointsCard = ({ user, onPress }: BeautyPointsCardProps) => {
           <View 
             style={[
               styles.progressFill, 
-              { width: `${progressPercentage * 100}%` }
+              { width: `${progressPercentage * 100}%` as DimensionValue }
             ]} 
           />
         </View>
@@ -266,7 +266,7 @@ const styles = {
     overflow: 'hidden' as const,
   },
   progressFill: {
-    height: '100%',
+    height: 6, // ✅ CORREGIDO: Número en lugar de '100%'
     backgroundColor: modernColors.accent,
     borderRadius: 3,
   },

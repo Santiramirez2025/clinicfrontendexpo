@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Dimensions, DimensionValue } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { modernColors, modernTypography, modernShadows } from '../../styles';
@@ -354,7 +354,7 @@ export const VIPPlans = ({ vipStatus, onSubscribe, subscribing }: VIPPlansProps)
 };
 
 // ============================================================================
-// ESTILOS
+// ESTILOS ✅ - CORREGIDOS
 // ============================================================================
 const styles = {
   section: {
@@ -403,7 +403,7 @@ const styles = {
   },
   pointsContainer: {
     flexDirection: 'row' as const,
-    width: '100%',
+    width: '100%' as DimensionValue, // ✅ CORREGIDO: Cast explícito
     gap: 16,
   },
   pointsCard: {

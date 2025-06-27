@@ -9,13 +9,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// ✅ IMPORTS CORREGIDOS - SOLO LOS QUE EXISTEN
+// ✅ IMPORTS CORREGIDOS
 import { 
   modernColors, 
   modernSpacing, 
   modernTypography,
   modernShadows,
-  // variants, // ❌ COMENTADO SI DA ERROR
 } from '../../styles';
 
 // ✅ IMPORTAR COMPONENTES DE LOGIN
@@ -27,17 +26,20 @@ import {
   LoginForm,
   TestCredentials,
   LoginFooter,
-  loginStyles // ✅ Mantener estilos existentes como fallback
+  loginStyles
 } from '../../components/login';
 
-// ✅ IMPORTAR API SERVICE
+// ✅ IMPORTAR HOOKS Y REDUX
 import { useAuth } from '../../hooks/useAuth';
 import { useDispatch } from 'react-redux';
-import { setUser, setToken } from '../../store/slices/authSlice';
+import { setUser } from '../../store/slices/authSlice';
 import { authAPI } from '../../services/api';
 
+// ✅ IMPORTAR TIPOS DESDE auth.ts
+import type { User, LoginCredentials, mapConnectionStatus } from '../../types/auth';
+
 // ============================================================================
-// TIPOS PARA NAVIGATION
+// TIPOS PARA NAVIGATION ✅
 // ============================================================================
 interface LoginScreenProps {
   navigation: {
@@ -47,16 +49,14 @@ interface LoginScreenProps {
 }
 
 // ============================================================================
-// ESTILOS PREMIUM QUE EXTIENDEN LOS EXISTENTES
+// ESTILOS PREMIUM QUE EXTIENDEN LOS EXISTENTES ✅
 // ============================================================================
 const premiumLoginStyles = StyleSheet.create({
-  // === OVERRIDE DEL CONTAINER ===
   container: {
     ...loginStyles.container,
     backgroundColor: modernColors.backgroundWarm || modernColors.background,
   },
 
-  // === OVERRIDE DEL SCROLL ===
   scrollView: {
     ...loginStyles.scrollView,
   },
@@ -68,7 +68,6 @@ const premiumLoginStyles = StyleSheet.create({
     paddingBottom: modernSpacing.xxl || 40,
   },
 
-  // === PREMIUM ENHANCEMENT WRAPPERS ===
   enhancedCard: {
     borderRadius: modernSpacing.xl || 16,
     shadowColor: modernShadows.soft?.shadowColor || '#000',
@@ -85,20 +84,20 @@ const premiumLoginStyles = StyleSheet.create({
     shadowRadius: modernShadows.premium?.shadowRadius || 12,
     elevation: modernShadows.premium?.elevation || 8,
     borderWidth: 1,
-    borderColor: modernColors.vip || modernColors.accent,
+    borderColor: modernColors.accent,
   },
 
   wellnessEnhancement: {
     borderLeftWidth: 4,
-    borderLeftColor: modernColors.wellness || modernColors.accent,
+    borderLeftColor: modernColors.accent,
   },
 });
 
 // ============================================================================
-// COMPONENTE PRINCIPAL CON CONEXIÓN AL BACKEND
+// COMPONENTE PRINCIPAL CON CONEXIÓN AL BACKEND ✅
 // ============================================================================
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  // ✅ USAR useAuth HOOK Y REDUX
+  // ✅ USAR useAuth HOOK SIN PARÁMETROS
   const {
     login,
     loading,
@@ -125,7 +124,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const checkBackendConnection = async () => {
     try {
       setConnectionStatus('checking');
-      const response = await fetch('http://localhost:3000/health');
+      const response = await fetch('http://192.168.1.174:3000/health'); // ✅ TU IP
       
       if (response.ok) {
         setConnectionStatus('connected');
@@ -168,28 +167,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     try {
       console.log('🎭 Iniciando demo login...');
       
-      // ✅ USAR EL API SERVICE EN LUGAR DE FETCH DIRECTO
       const data = await authAPI.demoLogin();
 
       if (data.success) {
         console.log('✅ Demo login exitoso');
         
-        // ✅ GUARDAR EN REDUX STORE
-        const userData = {
+        // ✅ CREAR USUARIO CON CAMPOS REQUERIDOS
+        const userData: User = {
           id: data.data.user.id,
           name: `${data.data.user.firstName} ${data.data.user.lastName}`,
           email: data.data.user.email,
+          role: 'demo',
+          createdAt: new Date().toISOString(), // ✅ REQUERIDO
+          updatedAt: new Date().toISOString(), // ✅ REQUERIDO
+          
+          // Campos adicionales
           firstName: data.data.user.firstName,
           lastName: data.data.user.lastName,
           beautyPoints: data.data.user.beautyPoints,
           sessionsCompleted: data.data.user.sessionsCompleted,
           vipStatus: data.data.user.vipStatus,
-          role: 'demo' as const,
         };
         
-        // ✅ DISPATCH A REDUX (el API service ya guardó tokens)
+        // ✅ DISPATCH A REDUX
         dispatch(setUser(userData));
-        dispatch(setToken(data.data.tokens.accessToken));
         
         console.log('✅ Usuario logueado con token guardado');
         
@@ -201,7 +202,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     }
   };
 
-  // ✅ MANEJAR LOGIN TRADICIONAL
+  // ✅ MANEJAR LOGIN TRADICIONAL - CORREGIDO
   const handleLogin = async () => {
     if (!validateFields()) {
       return;
@@ -209,12 +210,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
     try {
       console.log('🔐 Iniciando login tradicional...');
-      await login(email.trim(), password);
+      
+      // ✅ USAR OBJETO LoginCredentials
+      const credentials: LoginCredentials = {
+        email: email.trim(),
+        password: password
+      };
+      
+      await login(credentials); // ✅ PASAR OBJETO, NO PARÁMETROS SEPARADOS
       console.log('✅ Login exitoso - Redux manejará la navegación');
-      // ✅ NO NECESITA NAVEGACIÓN MANUAL - Redux se encarga
     } catch (error) {
       console.error('❌ Error en login:', error);
-      // El error ya se maneja en useAuth
     }
   };
 
@@ -235,6 +241,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     navigation.navigate('Register');
   };
 
+  // ✅ MAPEAR CONNECTION STATUS PARA COMPONENTES
+  const getConnectionStatusForComponents = (status: typeof connectionStatus): 'checking' | 'connected' | 'error' => {
+    if (status === 'disconnected') return 'error';
+    return status as 'checking' | 'connected' | 'error';
+  };
+
   return (
     <SafeAreaView style={premiumLoginStyles.container}>
       <StatusBar 
@@ -248,33 +260,33 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ✅ ESTADO DE CONEXIÓN */}
+        {/* ✅ ESTADO DE CONEXIÓN - STATUS MAPEADO */}
         <ConnectionStatus 
-          status={connectionStatus}
+          status={getConnectionStatusForComponents(connectionStatus)}
           onRetry={checkBackendConnection}
         />
 
         {/* ✅ HEADER PRINCIPAL */}
         <LoginHeader />
 
-        {/* ✅ DEMO EXPERIENCE CARD */}
+        {/* ✅ DEMO EXPERIENCE CARD - STATUS MAPEADO */}
         <DemoCard 
           onDemoLogin={handleDemoLogin}
           loading={loading}
-          connectionStatus={connectionStatus}
+          connectionStatus={getConnectionStatusForComponents(connectionStatus)}
         />
 
         {/* ✅ ELEGANT DIVIDER */}
         <ElegantDivider />
 
-        {/* ✅ LOGIN FORM */}
+        {/* ✅ LOGIN FORM - STATUS MAPEADO */}
         <LoginForm
           email={email}
           password={password}
           emailError={emailError}
           passwordError={passwordError}
           loading={loading}
-          connectionStatus={connectionStatus}
+          connectionStatus={getConnectionStatusForComponents(connectionStatus)}
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
           onLogin={handleLogin}

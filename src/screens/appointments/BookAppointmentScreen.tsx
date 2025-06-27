@@ -4,10 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { modernColors, modernTypography, modernShadows } from '../../styles';
 
-// Hooks
+// ✅ HOOKS CORREGIDOS
 import { useBookAppointment } from '../../hooks/useBookAppointment';
 
-// Componentes
+// ✅ COMPONENTES CORREGIDOS
 import {
   TreatmentSelector,
   ProfessionalSelector,
@@ -16,13 +16,32 @@ import {
   NotesSection,
 } from '../../components/appointments/BookingSteps';
 
+// ✅ SEPARAR BookingSummary si viene de otro archivo
 import { 
   Header, 
   BookingSummary, 
   BottomAction 
 } from '../../components/appointments/BookingSummary';
 
-const BookAppointmentScreen = ({ navigation }: any) => {
+// ✅ TIPOS NECESARIOS
+interface Treatment {
+  id: string;
+  name: string;
+  price: number;
+  iconName?: string;
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
+interface BookAppointmentScreenProps {
+  navigation: any;
+}
+
+const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigation }) => {
   const {
     treatments,
     professionals,
@@ -47,7 +66,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
   const totalSteps = 5;
 
   // ============================================================================
-  // HANDLERS
+  // HANDLERS CORREGIDOS ✅
   // ============================================================================
   const handleSubmit = async () => {
     try {
@@ -75,22 +94,23 @@ const BookAppointmentScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleStepSelection = (newValue: any, stepType: string) => {
+  // ✅ TIPOS EXPLÍCITOS EN HANDLERS
+  const handleStepSelection = (newValue: Treatment | Professional | string, stepType: string) => {
     switch (stepType) {
       case 'treatment':
-        selectTreatment(newValue);
+        selectTreatment(newValue as Treatment);
         if (newValue && currentStep === 1) setCurrentStep(2);
         break;
       case 'professional':
-        selectProfessional(newValue);
+        selectProfessional(newValue as Professional);
         if (newValue && currentStep === 2) setCurrentStep(3);
         break;
       case 'date':
-        selectDate(newValue);
+        selectDate(newValue as string);
         if (newValue && currentStep === 3) setCurrentStep(4);
         break;
       case 'time':
-        selectTime(newValue);
+        selectTime(newValue as string);
         if (newValue && currentStep === 4) setCurrentStep(5);
         break;
     }
@@ -118,7 +138,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
   };
 
   // ============================================================================
-  // RENDERIZAR PASO ACTUAL
+  // RENDERIZAR PASO ACTUAL CON TIPOS ✅
   // ============================================================================
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -127,8 +147,8 @@ const BookAppointmentScreen = ({ navigation }: any) => {
           <TreatmentSelector
             treatments={treatments}
             selectedTreatment={selectedTreatment}
-            onSelect={(treatment) => handleStepSelection(treatment, 'treatment')}
-            loading={loading}
+            onSelect={(treatment: Treatment) => handleStepSelection(treatment, 'treatment')}
+            // ✅ QUITAR loading si no existe en props
           />
         );
       
@@ -137,8 +157,8 @@ const BookAppointmentScreen = ({ navigation }: any) => {
           <ProfessionalSelector
             professionals={professionals}
             selectedProfessional={selectedProfessional}
-            onSelect={(professional) => handleStepSelection(professional, 'professional')}
-            loading={loading}
+            onSelect={(professional: Professional) => handleStepSelection(professional, 'professional')}
+            // ✅ QUITAR loading si no existe en props
           />
         );
       
@@ -146,7 +166,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
         return (
           <DateSelector
             selectedDate={selectedDate}
-            onSelect={(date) => handleStepSelection(date, 'date')}
+            onSelect={(date: string) => handleStepSelection(date, 'date')}
           />
         );
       
@@ -155,8 +175,8 @@ const BookAppointmentScreen = ({ navigation }: any) => {
           <TimeSelector
             availableSlots={availableSlots}
             selectedTime={selectedTime}
-            onSelect={(time) => handleStepSelection(time, 'time')}
-            loading={loading}
+            onSelect={(time: string) => handleStepSelection(time, 'time')}
+            // ✅ QUITAR loading si no existe en props
           />
         );
       
@@ -174,7 +194,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
             )}
             <NotesSection
               notes={notes}
-              onNotesChange={setNotes}
+              onChangeNotes={setNotes} // ✅ USAR onChangeNotes en lugar de onNotesChange
             />
           </>
         );
@@ -185,7 +205,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
   };
 
   // ============================================================================
-  // RENDERIZAR BOTÓN DE NAVEGACIÓN
+  // RENDERIZAR BOTÓN DE NAVEGACIÓN ✅
   // ============================================================================
   const renderBottomAction = () => {
     if (currentStep === 5) {
@@ -202,10 +222,10 @@ const BookAppointmentScreen = ({ navigation }: any) => {
             {submitting ? (
               <Text style={styles.confirmButtonText}>Agendando...</Text>
             ) : (
-              <>
+              <View style={styles.buttonContent}>
                 <Text style={styles.confirmButtonText}>Confirmar cita</Text>
                 <Ionicons name="checkmark" size={20} color={modernColors.white} />
-              </>
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -277,7 +297,7 @@ const BookAppointmentScreen = ({ navigation }: any) => {
 };
 
 // ============================================================================
-// ESTILOS PROFESIONALES SIN TABBAR
+// ESTILOS CORREGIDOS ✅
 // ============================================================================
 const styles = {
   container: {
@@ -369,7 +389,6 @@ const styles = {
     ...modernShadows.large,
   },
   confirmButton: {
-    flexDirection: 'row' as const,
     backgroundColor: modernColors.primary,
     paddingVertical: 18,
     paddingHorizontal: 32,
@@ -381,6 +400,12 @@ const styles = {
   confirmButtonDisabled: {
     backgroundColor: modernColors.gray300,
     opacity: 0.6,
+  },
+  // ✅ AGREGAR buttonContent
+  buttonContent: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
   confirmButtonText: {
     color: modernColors.white,

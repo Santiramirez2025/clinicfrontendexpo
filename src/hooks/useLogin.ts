@@ -1,17 +1,21 @@
 // ============================================================================
-// hooks/useLogin.ts - HOOK DE LOGIN CORREGIDO PARA TU ESTRUCTURA
+// hooks/useLogin.ts - HOOK DE LOGIN CORREGIDO PARA TU ESTRUCTURA ✅
 // ============================================================================
 import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
+import * as SecureStore from 'expo-secure-store';
 
-// ✅ IMPORTAR ACCIONES ESPECÍFICAS QUE EXISTEN EN TU SLICE
-import { setUser, setToken, loginSuccess } from '../store/slices/authSlice';
+// ✅ IMPORTAR ACCIONES CORRECTAS
+import { setUser, setToken, setLoading } from '../store/slices/authSlice';
 import { authAPI, handleApiError } from '../services/api';
-import ApiService from '../services/api';
+import api from '../services/api'; // ✅ CORREGIDO: import correcto
+
+// ✅ IMPORTAR TIPOS DESDE auth.ts PARA CONSISTENCIA
+import type { User, UserRole } from '../types/auth';
 
 // ============================================================================
-// TIPOS Y INTERFACES (MANTENIDOS IGUALES)
+// TIPOS Y INTERFACES ✅
 // ============================================================================
 export interface LoginFormData {
   email: string;
@@ -30,11 +34,17 @@ export interface LoginResponse {
       beautyPoints: number;
       sessionsCompleted: number;
       isDemo?: boolean;
+      role?: UserRole;
+      createdAt?: string;
+      updatedAt?: string;
     };
     tokens: {
       accessToken: string;
       refreshToken: string;
     };
+  };
+  error?: {
+    message: string;
   };
 }
 
@@ -44,10 +54,12 @@ export interface LoginUser {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'patient' | 'demo';
+  role: UserRole;
   beautyPoints: number;
   sessionsCompleted: number;
   vipStatus: boolean;
+  createdAt: string; // ✅ AGREGADO - REQUERIDO
+  updatedAt: string; // ✅ AGREGADO - REQUERIDO
 }
 
 interface UseLoginReturn {
@@ -86,7 +98,7 @@ interface UseLoginReturn {
 }
 
 // ============================================================================
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL ✅
 // ============================================================================
 export const useLogin = (): UseLoginReturn => {
   const dispatch = useDispatch();
@@ -102,7 +114,7 @@ export const useLogin = (): UseLoginReturn => {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   // ============================================================================
-  // FUNCIONES DE VALIDACIÓN
+  // FUNCIONES DE VALIDACIÓN ✅
   // ============================================================================
   const validateEmail = useCallback((emailValue: string): string => {
     if (!emailValue.trim()) {
@@ -140,13 +152,13 @@ export const useLogin = (): UseLoginReturn => {
   }, [email, password, validateEmail, validatePassword]);
 
   // ============================================================================
-  // FUNCIONES DE CONEXIÓN
+  // FUNCIONES DE CONEXIÓN ✅
   // ============================================================================
   const checkBackendConnection = useCallback(async () => {
     try {
       setConnectionStatus('checking');
       console.log('🔌 Verificando conexión con backend...');
-      const isConnected = await ApiService.checkConnection();
+      const isConnected = await api.checkConnection(); // ✅ CORREGIDO
       setConnectionStatus(isConnected ? 'connected' : 'error');
       console.log(`🔌 Estado conexión: ${isConnected ? 'CONECTADO' : 'ERROR'}`);
     } catch (error) {
@@ -156,7 +168,7 @@ export const useLogin = (): UseLoginReturn => {
   }, []);
 
   // ============================================================================
-  // FUNCIONES DE FORMULARIO
+  // FUNCIONES DE FORMULARIO ✅
   // ============================================================================
   const updateEmail = useCallback((emailValue: string) => {
     setEmail(emailValue);
@@ -189,23 +201,34 @@ export const useLogin = (): UseLoginReturn => {
   }, [clearErrors]);
 
   // ============================================================================
-  // FUNCIONES DE AUTENTICACIÓN CORREGIDAS
+  // HELPER PARA CREAR USER PAYLOAD ✅
   // ============================================================================
-  const createUserPayload = useCallback((userData: any): LoginUser => {
+  const createUserPayload = useCallback((userData: any): User => {
     return {
       id: userData.id,
-      name: `${userData.firstName} ${userData.lastName}`,
+      name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
       email: userData.email,
+      role: userData.role || (userData.isDemo ? 'demo' : 'patient'),
+      avatar: userData.avatar,
+      phone: userData.phone,
+      dateOfBirth: userData.dateOfBirth,
+      preferences: userData.preferences,
+      createdAt: userData.createdAt || new Date().toISOString(), // ✅ REQUERIDO
+      updatedAt: userData.updatedAt || new Date().toISOString(), // ✅ REQUERIDO
+      
+      // ✅ CAMPOS ADICIONALES PARA COMPATIBILIDAD
       firstName: userData.firstName,
       lastName: userData.lastName,
-      role: userData.isDemo ? 'demo' : 'patient',
-      vipStatus: userData.vipStatus || false,
       beautyPoints: userData.beautyPoints || 0,
       sessionsCompleted: userData.sessionsCompleted || 0,
+      vipStatus: userData.vipStatus || false,
     };
   }, []);
 
-  const handleSuccessfulAuth = useCallback((response: LoginResponse, isDemo = false) => {
+  // ============================================================================
+  // FUNCIONES DE AUTENTICACIÓN CORREGIDAS ✅
+  // ============================================================================
+  const handleSuccessfulAuth = useCallback(async (response: LoginResponse, isDemo = false) => {
     try {
       console.log('🎉 Procesando autenticación exitosa...');
       
@@ -214,15 +237,15 @@ export const useLogin = (): UseLoginReturn => {
       console.log('👤 Usuario a almacenar:', userPayload);
       console.log('🔑 Token recibido:', response.data.tokens.accessToken.substring(0, 20) + '...');
       
-      // ✅ DESPACHAR ACCIONES CORREGIDAS
+      // ✅ GUARDAR TOKENS EN SECURE STORE
+      await SecureStore.setItemAsync('accessToken', response.data.tokens.accessToken);
+      if (response.data.tokens.refreshToken) {
+        await SecureStore.setItemAsync('refreshToken', response.data.tokens.refreshToken);
+      }
+      
+      // ✅ DESPACHAR ACCIONES CORREGIDAS - SIN return
       dispatch(setUser(userPayload));
       dispatch(setToken(response.data.tokens.accessToken));
-      
-      // O alternativamente usar loginSuccess que combina ambas
-      // dispatch(loginSuccess({ 
-      //   user: userPayload, 
-      //   token: response.data.tokens.accessToken 
-      // }));
       
       const welcomeMessage = isDemo ? 
         `¡Bienvenida! ✨\nHola ${response.data.user.firstName}, tu experiencia de belleza comienza ahora.` :
@@ -263,13 +286,16 @@ export const useLogin = (): UseLoginReturn => {
 
     try {
       setLoading(true);
+      dispatch(setLoading(true)); // ✅ SIN return
       console.log('🚀 Iniciando login para:', email.trim());
       
       const response = await authAPI.login(email.trim(), password);
       
       if (response.success) {
         console.log('✅ Login exitoso:', response.data.user.firstName);
-        handleSuccessfulAuth(response, false);
+        await handleSuccessfulAuth(response, false);
+      } else {
+        throw new Error(response.error?.message || 'Error de login');
       }
       
     } catch (error: any) {
@@ -289,6 +315,7 @@ export const useLogin = (): UseLoginReturn => {
       }
     } finally {
       setLoading(false);
+      dispatch(setLoading(false)); // ✅ SIN return
     }
   }, [
     validateForm, 
@@ -296,7 +323,8 @@ export const useLogin = (): UseLoginReturn => {
     email, 
     password, 
     handleSuccessfulAuth,
-    checkBackendConnection
+    checkBackendConnection,
+    dispatch
   ]);
 
   const handleDemoLogin = useCallback(async () => {
@@ -314,15 +342,16 @@ export const useLogin = (): UseLoginReturn => {
 
     try {
       setLoading(true);
+      dispatch(setLoading(true)); // ✅ SIN return
       console.log('🎭 Iniciando demo login...');
       
       const response = await authAPI.demoLogin();
       
       if (response.success) {
         console.log('✅ Demo login exitoso:', response.data.user.firstName);
-        handleSuccessfulAuth(response, true);
+        await handleSuccessfulAuth(response, true);
       } else {
-        throw new Error('Demo login failed');
+        throw new Error(response.error?.message || 'Demo login failed');
       }
       
     } catch (error: any) {
@@ -339,17 +368,18 @@ export const useLogin = (): UseLoginReturn => {
       );
     } finally {
       setLoading(false);
+      dispatch(setLoading(false)); // ✅ SIN return
     }
-  }, [connectionStatus, handleSuccessfulAuth, checkBackendConnection]);
+  }, [connectionStatus, handleSuccessfulAuth, checkBackendConnection, dispatch]);
 
   // ============================================================================
-  // ESTADOS CALCULADOS
+  // ESTADOS CALCULADOS ✅
   // ============================================================================
   const isFormValid = email.trim() !== '' && password.trim() !== '' && !emailError && !passwordError;
   const canSubmit = isFormValid && !loading && connectionStatus === 'connected';
 
   // ============================================================================
-  // EFFECTS
+  // EFFECTS ✅
   // ============================================================================
   useEffect(() => {
     checkBackendConnection();

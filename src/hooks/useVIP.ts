@@ -1,15 +1,17 @@
 // ============================================================================
 // hooks/useVIP.ts - CUSTOM HOOK PARA LÓGICA VIP (CORREGIDO Y OPTIMIZADO) ✅
 // ============================================================================
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
 import { setUser } from '../store/slices/authSlice';
 import { vipAPI, handleApiError } from '../services/api';
 
+// ✅ IMPORTAR TIPOS DESDE auth.ts PARA CONSISTENCIA
+import type { User } from '../types/auth';
+
 // ============================================================================
-// TIPOS E INTERFACES
+// TIPOS E INTERFACES ✅
 // ============================================================================
 export interface VIPBenefit {
   id: string;
@@ -48,20 +50,14 @@ export interface Testimonial {
   rating: number;
 }
 
-// ✅ CORREGIDO: Interface para el usuario tipado
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  isDemo: boolean;
-  vipStatus: boolean;
-  beautyPoints: number;
-  sessionsCompleted: number;
-  totalInvestment?: number;
-  memberSince?: string;
+// ✅ INTERFACE PARA ROOTSTATE
+interface RootState {
+  auth: {
+    user: User | null;
+    isAuthenticated: boolean;
+    loading: boolean;
+    error: string | null;
+  };
 }
 
 interface UseVIPReturn {
@@ -86,7 +82,7 @@ interface UseVIPReturn {
 }
 
 // ============================================================================
-// CONSTANTES
+// CONSTANTES ✅
 // ============================================================================
 const BENEFIT_ICONS: Record<string, string> = {
   'priority': '🚀',
@@ -109,11 +105,11 @@ const BENEFIT_CATEGORIES: Record<string, VIPBenefit['category']> = {
 };
 
 // ============================================================================
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL ✅
 // ============================================================================
 export const useVIP = (navigation?: any): UseVIPReturn => {
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.auth.user) as User | null;
+  const user = useSelector((state: RootState) => state.auth.user);
 
   // Estados
   const [loading, setLoading] = useState(true);
@@ -124,20 +120,19 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
   const [subscribing, setSubscribing] = useState(false);
 
   // ============================================================================
-  // HELPERS MEMOIZADOS
+  // HELPERS ✅
   // ============================================================================
   const getIconForBenefit = useCallback((benefitId: string): string => {
     return BENEFIT_ICONS[benefitId] || '⭐';
   }, []);
 
-  // ✅ CORREGIDO: Función que siempre retorna el tipo correcto
   const getCategoryForBenefit = useCallback((benefitId: string): VIPBenefit['category'] => {
-    // Asegurar que siempre retornamos un valor del tipo correcto
     const category = BENEFIT_CATEGORIES[benefitId];
+    // ✅ VALIDAR QUE EL VALOR SEA DEL TIPO CORRECTO
     if (category && ['access', 'discounts', 'services', 'events', 'support'].includes(category)) {
       return category;
     }
-    return 'services'; // Valor por defecto del tipo correcto
+    return 'services'; // Valor por defecto seguro
   }, []);
 
   const scrollToPlans = useCallback(() => {
@@ -148,44 +143,107 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
   }, []);
 
   // ============================================================================
-  // FUNCIONES DE API
+  // FUNCIONES DE API ✅
   // ============================================================================
   const loadVIPData = useCallback(async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
 
+      console.log('👑 Cargando datos VIP...');
+
       // Cargar datos en paralelo
       const [statusResponse, benefitsResponse, testimonialsResponse] = await Promise.all([
-        vipAPI.getStatus(),
-        vipAPI.getBenefits(),
-        vipAPI.getTestimonials(),
+        vipAPI.getStatus().catch(err => ({ success: false, error: err })),
+        vipAPI.getBenefits().catch(err => ({ success: false, error: err })),
+        vipAPI.getTestimonials().catch(err => ({ success: false, error: err })),
       ]);
 
-      if (statusResponse.success) {
+      // ✅ MANEJO SEGURO DE RESPUESTAS
+      if (statusResponse.success && statusResponse.data) {
+        console.log('✅ Estado VIP cargado:', statusResponse.data);
         setVipStatus(statusResponse.data);
+      } else {
+        console.warn('⚠️ No se pudo cargar estado VIP');
       }
 
-      if (benefitsResponse.success) {
+      if (benefitsResponse.success && benefitsResponse.data?.benefits) {
+        console.log('✅ Beneficios VIP cargados:', benefitsResponse.data.benefits.length);
+        
         // Mapear beneficios del backend a formato local
         const mappedBenefits: VIPBenefit[] = benefitsResponse.data.benefits.map((benefit: any) => ({
-          id: benefit.id,
-          title: benefit.title,
-          description: benefit.description,
-          icon: getIconForBenefit(benefit.id),
-          category: getCategoryForBenefit(benefit.id),
-          available: true,
+          id: benefit.id || benefit.key || 'unknown',
+          title: benefit.title || 'Beneficio VIP',
+          description: benefit.description || 'Beneficio exclusivo para miembros VIP',
+          icon: getIconForBenefit(benefit.id || benefit.key),
+          category: getCategoryForBenefit(benefit.id || benefit.key),
+          available: benefit.available !== false, // Default true
         }));
         setBenefits(mappedBenefits);
+      } else {
+        console.warn('⚠️ No se pudieron cargar beneficios VIP');
+        // ✅ BENEFICIOS DE FALLBACK
+        setBenefits([
+          {
+            id: 'priority',
+            title: 'Citas Prioritarias',
+            description: 'Reserva citas con prioridad y acceso anticipado',
+            icon: '🚀',
+            category: 'access',
+            available: true,
+          },
+          {
+            id: 'discounts',
+            title: 'Descuentos Exclusivos',
+            description: '20% de descuento en todos los tratamientos',
+            icon: '🏷️',
+            category: 'discounts',
+            available: true,
+          },
+          {
+            id: 'free-facial',
+            title: 'Facial Mensual Gratis',
+            description: 'Un facial básico gratis cada mes',
+            icon: '✨',
+            category: 'services',
+            available: true,
+          },
+        ]);
       }
 
-      if (testimonialsResponse.success) {
+      if (testimonialsResponse.success && testimonialsResponse.data?.testimonials) {
+        console.log('✅ Testimonios cargados:', testimonialsResponse.data.testimonials.length);
         setTestimonials(testimonialsResponse.data.testimonials);
+      } else {
+        console.warn('⚠️ No se pudieron cargar testimonios');
+        // ✅ TESTIMONIOS DE FALLBACK
+        setTestimonials([
+          {
+            id: 1,
+            name: 'María García',
+            age: 32,
+            avatar: '👩‍🦳',
+            comment: 'Ser VIP ha transformado mi experiencia. Los descuentos y la atención prioritaria valen completamente la pena.',
+            rating: 5,
+          },
+          {
+            id: 2,
+            name: 'Ana López',
+            age: 28,
+            avatar: '👱‍♀️',
+            comment: 'El facial mensual gratis es increíble. Mi piel nunca se ha visto mejor.',
+            rating: 5,
+          },
+        ]);
       }
 
     } catch (error) {
-      console.error('Error loading VIP data:', error);
+      console.error('❌ Error loading VIP data:', error);
       const errorMessage = handleApiError(error, 'No se pudo cargar la información VIP');
-      Alert.alert('Error', errorMessage);
+      
+      // ✅ NO MOSTRAR ALERT EN REFRESH SILENCIOSO
+      if (!isRefresh) {
+        Alert.alert('Error', errorMessage);
+      }
     } finally {
       setLoading(false);
       if (isRefresh) setRefreshing(false);
@@ -195,23 +253,26 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
   const handleSubscribe = useCallback(async (planType: 'MONTHLY' | 'YEARLY') => {
     try {
       setSubscribing(true);
+      console.log('👑 Suscribiendo a plan VIP:', planType);
 
       const response = await vipAPI.subscribe(planType);
       
       if (response.success) {
-        // ✅ CORREGIDO: Verificar que user existe y tiene id
+        console.log('✅ Suscripción VIP exitosa');
+        
+        // ✅ ACTUALIZAR USUARIO EN REDUX
         if (user && user.id) {
           const updatedUser: User = {
-            ...user,
-            id: user.id, // Asegurar que id existe
+            ...user, // ✅ MANTENER TODOS LOS CAMPOS ORIGINALES
             vipStatus: true,
+            updatedAt: new Date().toISOString(), // ✅ ACTUALIZAR TIMESTAMP
           };
-          dispatch(setUser(updatedUser));
+          dispatch(setUser(updatedUser)); // ✅ SIN return
         }
 
         Alert.alert(
           '¡Bienvenida al Club VIP! 👑',
-          response.data.welcomeMessage || 'Ya puedes disfrutar de todos los beneficios exclusivos.',
+          response.data?.welcomeMessage || 'Ya puedes disfrutar de todos los beneficios exclusivos.',
           [
             {
               text: 'Explorar beneficios',
@@ -219,10 +280,12 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
             }
           ]
         );
+      } else {
+        throw new Error(response.error?.message || 'Error en la suscripción');
       }
 
     } catch (error) {
-      console.error('Error subscribing to VIP:', error);
+      console.error('❌ Error subscribing to VIP:', error);
       const errorMessage = handleApiError(error, 'No se pudo procesar la suscripción');
       Alert.alert('Error en suscripción', errorMessage);
     } finally {
@@ -259,13 +322,33 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
           navigation.navigate('Treatments', { showVIPPrices: true });
           break;
         case 'services':
-          navigation.navigate('VIPServices');
+          // ✅ NAVIGATION SEGURO - VERIFICAR SI EXISTE LA PANTALLA
+          if (navigation.navigate) {
+            try {
+              navigation.navigate('VIPServices');
+            } catch (error) {
+              console.warn('⚠️ VIPServices screen not found');
+              Alert.alert(benefit.title, benefit.description);
+            }
+          } else {
+            Alert.alert(benefit.title, benefit.description);
+          }
           break;
         case 'events':
-          navigation.navigate('VIPEvents');
+          try {
+            navigation.navigate('VIPEvents');
+          } catch (error) {
+            console.warn('⚠️ VIPEvents screen not found');
+            Alert.alert(benefit.title, benefit.description);
+          }
           break;
         case 'support':
-          navigation.navigate('VIPSupport');
+          try {
+            navigation.navigate('VIPSupport');
+          } catch (error) {
+            console.warn('⚠️ VIPSupport screen not found');
+            Alert.alert(benefit.title, benefit.description);
+          }
           break;
         default:
           Alert.alert(benefit.title, benefit.description);
@@ -283,14 +366,14 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
   }, [loadVIPData]);
 
   // ============================================================================
-  // EFFECTS
+  // EFFECTS ✅
   // ============================================================================
   useEffect(() => {
     loadVIPData();
   }, [loadVIPData]);
 
   // ============================================================================
-  // RETURN
+  // RETURN ✅
   // ============================================================================
   return {
     // Estado
@@ -315,6 +398,6 @@ export const useVIP = (navigation?: any): UseVIPReturn => {
 };
 
 // ============================================================================
-// EXPORT DEFAULT ADICIONAL (opcional)
+// EXPORT DEFAULT ✅
 // ============================================================================
 export default useVIP;

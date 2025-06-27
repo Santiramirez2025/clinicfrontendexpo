@@ -1,7 +1,7 @@
 // App.tsx - Versión 100% SIN ERRORES ✅
 import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
-import { StatusBar, View, Text, ActivityIndicator, Alert, Platform } from 'react-native';
+import { StatusBar, View, Text, ActivityIndicator, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider, useSelector, useDispatch } from 'react-redux';
@@ -11,14 +11,18 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 
 // ✅ IMPORT ESTILOS CORREGIDOS
-import { modernColors, modernSpacing, modernTypography, modernShadows } from './src/styles';
+import { modernColors, modernTypography } from './src/styles/colors';
+
+// ✅ IMPORT TIPOS CORREGIDOS
+import type { User } from './src/types/auth';
+import { createUserWithDefaults } from './src/types/auth';
 
 // Store
 import { store, persistor } from './src/store';
 import type { RootState } from './src/store';
-import { setUser, setToken, setLoading, logout } from './src/store/slices/authSlice';
+import { setUser, setToken, setLoading, clearUser } from './src/store/slices/authSlice';
 
-// Navigators - ✅ CAMBIO PRINCIPAL: MainStackNavigator en lugar de TabNavigator
+// Navigators
 import MainStackNavigator from './src/navigation/MainStackNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
 
@@ -28,7 +32,7 @@ import { authAPI, profileAPI } from './src/services/api';
 // Mantener splash visible
 SplashScreen.preventAutoHideAsync();
 
-// ✅ ESTILOS GLOBALES COMPLETAMENTE CORREGIDOS
+// ✅ ESTILOS GLOBALES CORREGIDOS SIN REFERENCIAS PROBLEMÁTICAS
 const globalStyles = {
   container: {
     flex: 1,
@@ -40,58 +44,57 @@ const globalStyles = {
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     backgroundColor: modernColors.background,
-    paddingHorizontal: 16, // Valor fijo seguro
+    paddingHorizontal: 16,
   },
   
   card: {
     backgroundColor: modernColors.surface,
-    borderRadius: 12, // Valor fijo seguro
-    padding: 16, // Valor fijo seguro
-    // Sombra sin spread operator
-    shadowColor: modernShadows.medium.shadowColor,
-    shadowOffset: modernShadows.medium.shadowOffset,
-    shadowOpacity: modernShadows.medium.shadowOpacity,
-    shadowRadius: modernShadows.medium.shadowRadius,
-    elevation: modernShadows.medium.elevation,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 8,
   },
   
-  // ✅ Typography styles TOTALMENTE CORREGIDOS
+  // ✅ Typography styles SEGUROS
   h1: {
-    fontSize: modernTypography.fontSizeModern.display || 36,
-    fontWeight: '700' as const, // Valor fijo sin referencias
-    color: modernColors.text,
+    fontSize: 36,
+    fontWeight: '700' as const,
+    color: modernColors.textPrimary,
     textAlign: 'center' as const,
   },
   
   h2: {
-    fontSize: modernTypography.fontSizeModern.xl || 20,
-    fontWeight: '600' as const, // Valor fijo sin referencias
-    color: modernColors.text,
+    fontSize: 24,
+    fontWeight: '600' as const,
+    color: modernColors.textPrimary,
     textAlign: 'center' as const,
   },
   
   body: {
-    fontSize: modernTypography.fontSizeModern.base || 16,
-    fontWeight: '400' as const, // Valor fijo sin referencias
-    color: modernColors.text,
+    fontSize: 16,
+    fontWeight: '400' as const,
+    color: modernColors.textPrimary,
     lineHeight: 22,
   },
   
   bodyLarge: {
-    fontSize: modernTypography.fontSizeModern.lg || 18,
-    fontWeight: '500' as const, // Valor fijo sin referencias
-    color: modernColors.text,
+    fontSize: 18,
+    fontWeight: '500' as const,
+    color: modernColors.textPrimary,
     lineHeight: 24,
   },
   
   caption: {
-    fontSize: modernTypography.fontSizeModern.sm || 14,
-    fontWeight: '400' as const, // Valor fijo sin referencias
-    color: modernColors.gray600,
+    fontSize: 14,
+    fontWeight: '400' as const,
+    color: modernColors.textSecondary,
     lineHeight: 18,
   },
   
-  // Spacing utilities con valores seguros
+  // Spacing utilities seguros
   mt2: { marginTop: 12 },
   mt3: { marginTop: 16 },
   mt4: { marginTop: 24 },
@@ -100,35 +103,25 @@ const globalStyles = {
   
   // Text alignment
   centerText: { textAlign: 'center' as const },
-  
-  // Shadow utilities expandidas
-  shadowMedium: {
-    shadowColor: modernShadows.medium.shadowColor,
-    shadowOffset: modernShadows.medium.shadowOffset,
-    shadowOpacity: modernShadows.medium.shadowOpacity,
-    shadowRadius: modernShadows.medium.shadowRadius,
-    elevation: modernShadows.medium.elevation,
-  },
 };
 
-// ✅ Loading Component MODERNIZADO Y CORREGIDO
+// ✅ Loading Component CORREGIDO
 const LoadingScreen = ({ message = 'Cargando...' }: { message?: string }) => (
   <View style={globalStyles.centerContainer}>
-    {/* Icon container moderno */}
+    {/* Icon container */}
     <View style={{
       width: 80,
       height: 80,
-      backgroundColor: modernColors.gray100,
+      backgroundColor: modernColors.backgroundCool,
       borderRadius: 40,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       marginBottom: 24,
-      // Sombra expandida sin spread
-      shadowColor: globalStyles.shadowMedium.shadowColor,
-      shadowOffset: globalStyles.shadowMedium.shadowOffset,
-      shadowOpacity: globalStyles.shadowMedium.shadowOpacity,
-      shadowRadius: globalStyles.shadowMedium.shadowRadius,
-      elevation: globalStyles.shadowMedium.elevation,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     }}>
       <Text style={{ fontSize: 32 }}>💆‍♀️</Text>
     </View>
@@ -136,12 +129,12 @@ const LoadingScreen = ({ message = 'Cargando...' }: { message?: string }) => (
     {/* Loading indicator */}
     <ActivityIndicator size="large" color={modernColors.accent} />
     
-    {/* Message con tipografía moderna */}
+    {/* Message */}
     <Text style={[
       globalStyles.bodyLarge,
       globalStyles.mt3,
       globalStyles.centerText,
-      { color: modernColors.gray600 }
+      { color: modernColors.textSecondary }
     ]}>
       {message}
     </Text>
@@ -151,14 +144,14 @@ const LoadingScreen = ({ message = 'Cargando...' }: { message?: string }) => (
       globalStyles.caption,
       globalStyles.mt2,
       globalStyles.centerText,
-      { color: modernColors.gray500 }
+      { color: modernColors.textTertiary }
     ]}>
       BELLEZA ESTÉTICA
     </Text>
   </View>
 );
 
-// Componente para verificar autenticación
+// ✅ Componente para verificar autenticación CORREGIDO
 const AuthChecker = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
   const [isChecking, setIsChecking] = useState(true);
@@ -179,18 +172,18 @@ const AuthChecker = ({ children }: { children: React.ReactNode }) => {
             const response = await profileAPI.get();
             
             if (response.success) {
-              // Token válido, restaurar usuario
-              const userData = {
+              // ✅ Token válido, restaurar usuario CON DEFAULTS
+              const userData = createUserWithDefaults({
                 id: response.data.user.id,
                 name: `${response.data.user.firstName} ${response.data.user.lastName}`,
                 email: response.data.user.email,
+                role: 'patient',
                 firstName: response.data.user.firstName,
                 lastName: response.data.user.lastName,
-                beautyPoints: response.data.stats.beautyPoints,
-                sessionsCompleted: response.data.stats.sessionsCompleted,
-                vipStatus: response.data.stats.vipStatus,
-                role: 'patient' as const,
-              };
+                beautyPoints: response.data.stats?.beautyPoints || 0,
+                sessionsCompleted: response.data.stats?.sessionsCompleted || 0,
+                vipStatus: response.data.stats?.vipStatus || false,
+              });
               
               const token = await SecureStore.getItemAsync('accessToken');
               
@@ -206,7 +199,7 @@ const AuthChecker = ({ children }: { children: React.ReactNode }) => {
             
             // Token inválido o expirado, limpiar datos
             await authAPI.logout();
-            dispatch(logout());
+            dispatch(clearUser());
           }
         } else {
           console.log('🚫 No authentication token found');
@@ -216,7 +209,7 @@ const AuthChecker = ({ children }: { children: React.ReactNode }) => {
         console.error('❌ Auth check error:', error);
         // En caso de error, limpiar sesión por seguridad
         await authAPI.logout();
-        dispatch(logout());
+        dispatch(clearUser());
       } finally {
         setIsChecking(false);
         dispatch(setLoading(false));
@@ -233,10 +226,12 @@ const AuthChecker = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// ✅ AppContent CORREGIDO
 const AppContent = () => {
-  const { isAuthenticated, isLoading, user } = useSelector((state: RootState) => state.auth);
+  // ✅ CAMBIO: usar 'loading' en lugar de 'isLoading'
+  const { isAuthenticated, loading, user } = useSelector((state: RootState) => state.auth);
 
-  if (isLoading) {
+  if (loading) {
     return <LoadingScreen message="Autenticando..." />;
   }
 
@@ -245,10 +240,10 @@ const AppContent = () => {
     console.log(`👋 Welcome back, ${user.name}!`);
   }
 
-  // ✅ CAMBIO PRINCIPAL: MainStackNavigator en lugar de TabNavigator
   return isAuthenticated ? <MainStackNavigator /> : <AuthNavigator />;
 };
 
+// ✅ AppInitializer CORREGIDO
 const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   const [isAppReady, setIsAppReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
@@ -290,7 +285,7 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
     initializeApp();
   }, []);
 
-  // ✅ Error Screen MODERNIZADO Y CORREGIDO
+  // ✅ Error Screen CORREGIDO
   if (initError) {
     return (
       <View style={globalStyles.centerContainer}>
@@ -298,10 +293,10 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
         <View style={{
           width: 80,
           height: 80,
-          backgroundColor: modernColors.error + '20',
+          backgroundColor: modernColors.errorLight,
           borderRadius: 40,
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: 'center' as const,
+          justifyContent: 'center' as const,
           marginBottom: 24,
         }}>
           <Text style={{ fontSize: 32 }}>⚠️</Text>
@@ -322,7 +317,7 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
           globalStyles.body,
           globalStyles.centerText,
           globalStyles.mb4,
-          { color: modernColors.gray600 }
+          { color: modernColors.textSecondary }
         ]}>
           Por favor, verifica tu conexión a internet e intenta nuevamente.
         </Text>
@@ -337,7 +332,7 @@ const AppInitializer = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// ✅ Error Boundary MODERNIZADO Y CORREGIDO
+// ✅ Error Boundary CORREGIDO
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error?: Error }
@@ -363,10 +358,10 @@ class ErrorBoundary extends React.Component<
           <View style={{
             width: 80,
             height: 80,
-            backgroundColor: modernColors.error + '20',
+            backgroundColor: modernColors.errorLight,
             borderRadius: 40,
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
             marginBottom: 24,
           }}>
             <Text style={{ fontSize: 32 }}>💥</Text>
@@ -387,7 +382,7 @@ class ErrorBoundary extends React.Component<
             globalStyles.body,
             globalStyles.centerText,
             globalStyles.mb4,
-            { color: modernColors.gray600 }
+            { color: modernColors.textSecondary }
           ]}>
             Reinicia la aplicación para continuar.
           </Text>

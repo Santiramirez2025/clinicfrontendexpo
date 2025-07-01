@@ -41,52 +41,93 @@ export const Header = ({ navigation, currentStep, totalSteps }: HeaderProps) => 
 );
 
 // ============================================================================
-// RESUMEN DE LA CITA
+// RESUMEN DE LA CITA - ⭐ CORREGIDO CON onEditStep
 // ============================================================================
 interface BookingSummaryProps {
   selectedTreatment: Treatment | null;
   selectedProfessional: Professional | null;
   selectedDate: string | null;
   selectedTime: string | null;
+  onEditStep: (step: number) => void; // ⭐ AGREGADO - REQUERIDO POR ERROR
 }
 
 export const BookingSummary = ({ 
   selectedTreatment, 
   selectedProfessional, 
   selectedDate, 
-  selectedTime 
+  selectedTime,
+  onEditStep // ⭐ AGREGADO
 }: BookingSummaryProps) => (
   <View style={styles.summarySection}>
     <Text style={styles.summaryTitle}>Resumen de tu cita</Text>
     
     <View style={styles.summaryCard}>
+      {/* ⭐ TRATAMIENTO CON BOTÓN EDITAR */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Tratamiento:</Text>
-        <Text style={styles.summaryValue}>{selectedTreatment?.name}</Text>
+        <View style={styles.summaryValueContainer}>
+          <Text style={styles.summaryValue}>{selectedTreatment?.name}</Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => onEditStep(1)}
+          >
+            <Ionicons name="pencil" size={16} color={modernColors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
       
+      {/* ⭐ PROFESIONAL CON BOTÓN EDITAR */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Profesional:</Text>
-        <Text style={styles.summaryValue}>
-          {selectedProfessional?.firstName} {selectedProfessional?.lastName}
-        </Text>
+        <View style={styles.summaryValueContainer}>
+          <Text style={styles.summaryValue}>
+            {selectedProfessional?.firstName ? 
+              `${selectedProfessional.firstName} ${selectedProfessional.lastName}` :
+              selectedProfessional?.name
+            }
+          </Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => onEditStep(2)}
+          >
+            <Ionicons name="pencil" size={16} color={modernColors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
       
+      {/* ⭐ FECHA CON BOTÓN EDITAR */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Fecha:</Text>
-        <Text style={styles.summaryValue}>
-          {selectedDate && new Date(selectedDate).toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </Text>
+        <View style={styles.summaryValueContainer}>
+          <Text style={styles.summaryValue}>
+            {selectedDate && new Date(selectedDate).toLocaleDateString('es-ES', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => onEditStep(3)}
+          >
+            <Ionicons name="pencil" size={16} color={modernColors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
       
+      {/* ⭐ HORA CON BOTÓN EDITAR */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Hora:</Text>
-        <Text style={styles.summaryValue}>{selectedTime}</Text>
+        <View style={styles.summaryValueContainer}>
+          <Text style={styles.summaryValue}>{selectedTime}</Text>
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => onEditStep(4)}
+          >
+            <Ionicons name="pencil" size={16} color={modernColors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
       
       <View style={styles.summaryRow}>
@@ -139,7 +180,7 @@ export const BottomAction = ({ currentStep, canSubmit, submitting, onSubmit }: B
 );
 
 // ============================================================================
-// ESTILOS
+// ESTILOS CORREGIDOS ✅
 // ============================================================================
 const styles = {
   header: {
@@ -217,8 +258,21 @@ const styles = {
     fontSize: modernTypography.fontSizeModern.base,
     color: modernColors.text,
     fontWeight: '500' as const,
-    flex: 2,
+    flex: 1,
     textAlign: 'right' as const,
+  },
+  // ⭐ NUEVOS ESTILOS PARA EDITAR
+  summaryValueContainer: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    flex: 2,
+    justifyContent: 'flex-end' as const,
+  },
+  editButton: {
+    marginLeft: 8,
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: modernColors.gray100,
   },
   summaryTotal: {
     borderTopWidth: 1,

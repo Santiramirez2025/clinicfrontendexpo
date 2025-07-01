@@ -109,8 +109,8 @@ export const useLogin = (): UseLoginReturn => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   
-  // Estados de UI
-  const [loading, setLoading] = useState(false);
+  // Estados de UI - ⭐ CORREGIDO: usar setLocalLoading para evitar conflictos
+  const [loading, setLocalLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   // ============================================================================
@@ -285,7 +285,7 @@ export const useLogin = (): UseLoginReturn => {
     }
 
     try {
-      setLoading(true);
+      setLocalLoading(true); // ⭐ CORREGIDO: usar setLocalLoading
       dispatch(setLoading(true)); // ✅ SIN return
       console.log('🚀 Iniciando login para:', email.trim());
       
@@ -314,7 +314,7 @@ export const useLogin = (): UseLoginReturn => {
         Alert.alert('Error', errorMessage);
       }
     } finally {
-      setLoading(false);
+      setLocalLoading(false); // ⭐ CORREGIDO: usar setLocalLoading
       dispatch(setLoading(false)); // ✅ SIN return
     }
   }, [
@@ -341,7 +341,7 @@ export const useLogin = (): UseLoginReturn => {
     }
 
     try {
-      setLoading(true);
+      setLocalLoading(true); // ⭐ CORREGIDO: usar setLocalLoading
       dispatch(setLoading(true)); // ✅ SIN return
       console.log('🎭 Iniciando demo login...');
       
@@ -367,7 +367,7 @@ export const useLogin = (): UseLoginReturn => {
         ]
       );
     } finally {
-      setLoading(false);
+      setLocalLoading(false); // ⭐ CORREGIDO: usar setLocalLoading
       dispatch(setLoading(false)); // ✅ SIN return
     }
   }, [connectionStatus, handleSuccessfulAuth, checkBackendConnection, dispatch]);

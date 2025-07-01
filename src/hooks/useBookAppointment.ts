@@ -6,13 +6,13 @@ import { Alert } from 'react-native';
 import { appointmentAPI, treatmentAPI, handleApiError } from '../services/api';
 
 // ============================================================================
-// TIPOS
+// TIPOS CORREGIDOS ✅
 // ============================================================================
 export interface Treatment {
   id: string;
   name: string;
-  category: string;
-  duration: number;
+  category: string; // ⭐ REQUERIDO - FIX ERROR
+  duration: number; // ⭐ REQUERIDO - FIX ERROR
   price: number;
   description?: string;
   emoji?: string;
@@ -25,7 +25,7 @@ export interface Professional {
   firstName?: string;
   lastName?: string;
   name: string; // ✅ AGREGADO: backend devuelve 'name' directamente
-  specialty?: string;
+  specialty: string; // ⭐ REQUERIDO (no opcional) - FIX ERROR
   specialties?: string[];
   avatar?: string;
   rating?: number;
@@ -48,7 +48,7 @@ export interface BookingData {
 }
 
 // ============================================================================
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL CON TIPOS CORREGIDOS ✅
 // ============================================================================
 interface UseBookAppointmentReturn {
   // Estados
@@ -64,14 +64,14 @@ interface UseBookAppointmentReturn {
   submitting: boolean;
   error: string | null;
   
-  // Funciones
+  // ⭐ FUNCIONES CORREGIDAS PARA ACEPTAR NULL
   loadTreatments: () => Promise<void>;
   loadProfessionals: (treatmentId?: string) => Promise<void>;
   loadAvailableSlots: (treatmentId: string, date: string) => Promise<void>;
-  selectTreatment: (treatment: Treatment) => void;
-  selectProfessional: (professional: Professional) => void;
-  selectDate: (date: string) => void;
-  selectTime: (time: string) => void;
+  selectTreatment: (treatment: Treatment | null) => void; // ⭐ ACEPTA NULL
+  selectProfessional: (professional: Professional | null) => void; // ⭐ ACEPTA NULL
+  selectDate: (date: string | null) => void; // ⭐ ACEPTA NULL
+  selectTime: (time: string | null) => void; // ⭐ ACEPTA NULL
   setNotes: (notes: string) => void;
   submitBooking: () => Promise<boolean>;
   resetBooking: () => void;
@@ -114,11 +114,11 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
         const transformedTreatments: Treatment[] = treatmentsData.map((treatment: any) => ({
           id: treatment.id,
           name: treatment.name,
-          category: treatment.category,
-          duration: treatment.duration,
+          category: treatment.category || 'General', // ⭐ FALLBACK
+          duration: treatment.duration || 60, // ⭐ FALLBACK
           price: treatment.price,
           description: treatment.description,
-          emoji: treatment.emoji || getTreatmentEmoji(treatment.category),
+          emoji: treatment.emoji || getTreatmentEmoji(treatment.category || 'General'),
           isVipExclusive: treatment.isVipExclusive,
           clinic: treatment.clinic,
         }));
@@ -196,6 +196,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
           availableProfessionals: slot.availableProfessionals?.map((prof: any) => ({
             id: prof.id,
             name: prof.name,
+            specialty: prof.specialty || prof.specialties?.[0] || 'General', // ⭐ FALLBACK
             specialties: prof.specialties,
             rating: prof.rating,
             isAvailable: true,
@@ -216,6 +217,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
               uniqueProfessionals.push({
                 id: prof.id,
                 name: prof.name,
+                specialty: prof.specialty || prof.specialties?.[0] || 'General', // ⭐ FALLBACK
                 specialties: prof.specialties,
                 rating: prof.rating,
                 isAvailable: true,
@@ -247,7 +249,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
   }, []);
 
   // ============================================================================
-  // FUNCIONES DE SELECCIÓN - SIN CAMBIOS
+  // FUNCIONES DE SELECCIÓN - ⭐ CORREGIDAS PARA ACEPTAR NULL
   // ============================================================================
   const selectTreatment = useCallback((treatment: Treatment | null) => {
     if (treatment) {
@@ -434,6 +436,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
       depilacion: '✨',
       corporal: '🧴',
       estetica: '🌟',
+      general: '💆‍♀️',
     };
     return emojiMap[category.toLowerCase()] || '💆‍♀️';
   };
@@ -453,14 +456,14 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
   };
 
   // ============================================================================
-  // DATOS MOCK - ✅ ACTUALIZADOS
+  // DATOS MOCK - ✅ ACTUALIZADOS CON CAMPOS REQUERIDOS
   // ============================================================================
   const getMockTreatments = (): Treatment[] => [
     {
       id: 't1',
       name: 'Ritual Purificante',
-      category: 'Facial',
-      duration: 60,
+      category: 'Facial', // ⭐ REQUERIDO
+      duration: 60, // ⭐ REQUERIDO
       price: 2500,
       emoji: '💆‍♀️',
       description: 'Limpieza facial profunda con extracción de comedones',
@@ -470,8 +473,8 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
     {
       id: 't2',
       name: 'Drenaje Relajante',
-      category: 'Corporal',
-      duration: 90,
+      category: 'Corporal', // ⭐ REQUERIDO
+      duration: 90, // ⭐ REQUERIDO
       price: 3500,
       emoji: '🤲',
       description: 'Masaje de drenaje linfático corporal',
@@ -481,8 +484,8 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
     {
       id: 't3',
       name: 'Hidratación Premium VIP',
-      category: 'Facial',
-      duration: 75,
+      category: 'Facial', // ⭐ REQUERIDO
+      duration: 75, // ⭐ REQUERIDO
       price: 4500,
       emoji: '✨',
       description: 'Tratamiento facial exclusivo con ácido hialurónico',
@@ -497,6 +500,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
       name: 'Ana Martínez',
       firstName: 'Ana',
       lastName: 'Martínez',
+      specialty: 'Facial', // ⭐ REQUERIDO
       specialties: ['Facial', 'Corporal'],
       rating: 4.9,
       isAvailable: true,
@@ -506,6 +510,7 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
       name: 'Carmen Rodríguez',
       firstName: 'Carmen',
       lastName: 'Rodríguez',
+      specialty: 'Corporal', // ⭐ REQUERIDO
       specialties: ['Facial', 'Corporal'],
       rating: 4.9,
       isAvailable: true,
@@ -517,28 +522,56 @@ export const useBookAppointment = (navigation: any): UseBookAppointmentReturn =>
       time: '09:00', 
       available: true,
       availableProfessionals: [
-        { id: 'prof1', name: 'Ana Martínez', specialties: ['Facial'], rating: 4.9, isAvailable: true }
+        { 
+          id: 'prof1', 
+          name: 'Ana Martínez', 
+          specialty: 'Facial', // ⭐ REQUERIDO
+          specialties: ['Facial'], 
+          rating: 4.9, 
+          isAvailable: true 
+        }
       ]
     },
     { 
       time: '10:00', 
       available: true,
       availableProfessionals: [
-        { id: 'prof2', name: 'Carmen Rodríguez', specialties: ['Corporal'], rating: 4.9, isAvailable: true }
+        { 
+          id: 'prof2', 
+          name: 'Carmen Rodríguez', 
+          specialty: 'Corporal', // ⭐ REQUERIDO
+          specialties: ['Corporal'], 
+          rating: 4.9, 
+          isAvailable: true 
+        }
       ]
     },
     { 
       time: '14:00', 
       available: true,
       availableProfessionals: [
-        { id: 'prof1', name: 'Ana Martínez', specialties: ['Facial'], rating: 4.9, isAvailable: true }
+        { 
+          id: 'prof1', 
+          name: 'Ana Martínez', 
+          specialty: 'Facial', // ⭐ REQUERIDO
+          specialties: ['Facial'], 
+          rating: 4.9, 
+          isAvailable: true 
+        }
       ]
     },
     { 
       time: '15:30', 
       available: true,
       availableProfessionals: [
-        { id: 'prof2', name: 'Carmen Rodríguez', specialties: ['Corporal'], rating: 4.9, isAvailable: true }
+        { 
+          id: 'prof2', 
+          name: 'Carmen Rodríguez', 
+          specialty: 'Corporal', // ⭐ REQUERIDO
+          specialties: ['Corporal'], 
+          rating: 4.9, 
+          isAvailable: true 
+        }
       ]
     },
   ];

@@ -8,15 +8,17 @@ interface Treatment {
   id: string;
   name: string;
   price: number;
-  iconName?: 'sparkles' | 'waves' | 'crown' | string;
+  category: string; // ⭐ AGREGAR
+  duration: number; // ⭐ AGREGAR
+  // ... otros campos
 }
 
 interface Professional {
   id: string;
   name: string;
-  specialty: string;
+  specialty?: string; // ⭐ HACER OPCIONAL
+  // ... otros campos
 }
-
 interface TreatmentSelectorProps {
   treatments: Treatment[];
   selectedTreatment?: Treatment | null;

@@ -6,6 +6,8 @@ import { modernColors, modernTypography, modernShadows } from '../../styles';
 
 // ✅ HOOKS CORREGIDOS
 import { useBookAppointment } from '../../hooks/useBookAppointment';
+// ⭐ IMPORTAR TIPOS DEL HOOK PARA COMPATIBILIDAD
+import type { Treatment, Professional, TimeSlot } from '../../hooks/useBookAppointment';
 
 // ✅ COMPONENTES CORREGIDOS
 import {
@@ -22,20 +24,6 @@ import {
   BookingSummary, 
   BottomAction 
 } from '../../components/appointments/BookingSummary';
-
-// ✅ TIPOS NECESARIOS
-interface Treatment {
-  id: string;
-  name: string;
-  price: number;
-  iconName?: string;
-}
-
-interface Professional {
-  id: string;
-  name: string;
-  specialty: string;
-}
 
 interface BookAppointmentScreenProps {
   navigation: any;
@@ -94,23 +82,23 @@ const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigatio
     }
   };
 
-  // ✅ TIPOS EXPLÍCITOS EN HANDLERS
-  const handleStepSelection = (newValue: Treatment | Professional | string, stepType: string) => {
+  // ⭐ HANDLER CORREGIDO - SIN CASTING PROBLEMÁTICO
+  const handleStepSelection = (newValue: any, stepType: string) => {
     switch (stepType) {
       case 'treatment':
-        selectTreatment(newValue as Treatment);
+        selectTreatment(newValue); // ⭐ SIN CASTING
         if (newValue && currentStep === 1) setCurrentStep(2);
         break;
       case 'professional':
-        selectProfessional(newValue as Professional);
+        selectProfessional(newValue); // ⭐ SIN CASTING
         if (newValue && currentStep === 2) setCurrentStep(3);
         break;
       case 'date':
-        selectDate(newValue as string);
+        selectDate(newValue);
         if (newValue && currentStep === 3) setCurrentStep(4);
         break;
       case 'time':
-        selectTime(newValue as string);
+        selectTime(newValue);
         if (newValue && currentStep === 4) setCurrentStep(5);
         break;
     }
@@ -137,28 +125,43 @@ const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigatio
     }
   };
 
+  // ⭐ FUNCIÓN HELPER PARA CONVERTIR SLOTS
+  const getAvailableSlotsAsStrings = (): string[] => {
+    if (!availableSlots) return [];
+    
+    if (availableSlots.length === 0) return [];
+    
+    const firstSlot = availableSlots[0];
+    
+    // Si es string[], retornar directamente
+    if (typeof firstSlot === 'string') {
+      return availableSlots as string[];
+    }
+    
+    // Si es TimeSlot[], extraer .time
+    return (availableSlots as TimeSlot[]).map(slot => slot.time);
+  };
+
   // ============================================================================
-  // RENDERIZAR PASO ACTUAL CON TIPOS ✅
+  // RENDERIZAR PASO ACTUAL CON TIPOS CORREGIDOS ✅
   // ============================================================================
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
         return (
           <TreatmentSelector
-            treatments={treatments}
+            treatments={treatments || []}
             selectedTreatment={selectedTreatment}
-            onSelect={(treatment: Treatment) => handleStepSelection(treatment, 'treatment')}
-            // ✅ QUITAR loading si no existe en props
+            onSelect={(treatment) => handleStepSelection(treatment, 'treatment')} // ⭐ SIN TIPO EXPLÍCITO
           />
         );
       
       case 2:
         return (
           <ProfessionalSelector
-            professionals={professionals}
+            professionals={professionals || []}
             selectedProfessional={selectedProfessional}
-            onSelect={(professional: Professional) => handleStepSelection(professional, 'professional')}
-            // ✅ QUITAR loading si no existe en props
+            onSelect={(professional) => handleStepSelection(professional, 'professional')} // ⭐ SIN TIPO EXPLÍCITO
           />
         );
       
@@ -166,17 +169,16 @@ const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigatio
         return (
           <DateSelector
             selectedDate={selectedDate}
-            onSelect={(date: string) => handleStepSelection(date, 'date')}
+            onSelect={(date) => handleStepSelection(date, 'date')}
           />
         );
       
       case 4:
         return (
           <TimeSelector
-            availableSlots={availableSlots}
+            availableSlots={getAvailableSlotsAsStrings()} // ⭐ USAR FUNCIÓN HELPER
             selectedTime={selectedTime}
-            onSelect={(time: string) => handleStepSelection(time, 'time')}
-            // ✅ QUITAR loading si no existe en props
+            onSelect={(time) => handleStepSelection(time, 'time')}
           />
         );
       
@@ -194,7 +196,7 @@ const BookAppointmentScreen: React.FC<BookAppointmentScreenProps> = ({ navigatio
             )}
             <NotesSection
               notes={notes}
-              onChangeNotes={setNotes} // ✅ USAR onChangeNotes en lugar de onNotesChange
+              onChangeNotes={setNotes}
             />
           </>
         );
@@ -401,7 +403,6 @@ const styles = {
     backgroundColor: modernColors.gray300,
     opacity: 0.6,
   },
-  // ✅ AGREGAR buttonContent
   buttonContent: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,

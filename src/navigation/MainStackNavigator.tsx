@@ -1,8 +1,10 @@
 // ============================================================================
-// MainStackNavigator.tsx - NAVEGADOR PRINCIPAL CON TABS + MODALS
+// MainStackNavigator.tsx - NAVEGADOR PRINCIPAL CON TABS + MODALS - CORREGIDO
 // ============================================================================
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
 
 // Navigators
 import TabNavigator from './TabNavigator';
@@ -12,7 +14,44 @@ import AppointmentDetailsScreen from '../screens/dashboard/AppointmentDetailsScr
 import TreatmentsScreen from '../screens/TreatmentsScreen';
 import BeautyPointsScreen from '../screens/BeautyPointsScreen';
 
-const Stack = createStackNavigator();
+// ============================================================================
+// TIPOS DE NAVEGACIÓN - CORREGIDOS ✅
+// ============================================================================
+export type MainStackParamList = {
+  MainTabs: undefined;
+  AppointmentDetails: {
+    appointmentId: string;
+    appointment?: any; // Objeto appointment completo opcional
+  };
+  BeautyPoints: undefined;
+  Treatments: undefined;
+  // Pantallas futuras
+  // TreatmentDetails: { treatmentId: string };
+  // EditProfile: undefined;
+};
+
+export type MainStackNavigationProp = StackNavigationProp<MainStackParamList>;
+
+// ⭐ TIPOS ESPECÍFICOS PARA AppointmentDetailsScreen - FIX ERROR
+export type AppointmentDetailsScreenProps = {
+  navigation: StackNavigationProp<MainStackParamList, 'AppointmentDetails'>;
+  route: RouteProp<MainStackParamList, 'AppointmentDetails'>;
+};
+
+export type BeautyPointsScreenProps = {
+  navigation: StackNavigationProp<MainStackParamList, 'BeautyPoints'>;
+  route: RouteProp<MainStackParamList, 'BeautyPoints'>;
+};
+
+export type TreatmentsScreenProps = {
+  navigation: StackNavigationProp<MainStackParamList, 'Treatments'>;
+  route: RouteProp<MainStackParamList, 'Treatments'>;
+};
+
+// ============================================================================
+// COMPONENTE NAVEGADOR PRINCIPAL ✅
+// ============================================================================
+const Stack = createStackNavigator<MainStackParamList>();
 
 const MainStackNavigator = () => {
   return (
@@ -57,10 +96,10 @@ const MainStackNavigator = () => {
         }}
       />
       
-      {/* Pantallas modales */}
+      {/* ⭐ PANTALLA CORREGIDA - AppointmentDetails */}
       <Stack.Screen 
         name="AppointmentDetails" 
-        component={AppointmentDetailsScreen}
+        component={AppointmentDetailsScreen as React.ComponentType<any>} // ⭐ FIX TYPE ERROR
         options={{
           presentation: 'modal',
           gestureEnabled: true,

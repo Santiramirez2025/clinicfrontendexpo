@@ -6,7 +6,7 @@ export type UserRole = "patient" | "admin" | "professional" | "demo";
 
 export type ConnectionStatus = "checking" | "connected" | "disconnected" | "error";
 
-export type AuthType = 'login' | 'register' | 'forgot-password';
+export type AuthType = 'login' | 'register' | 'forgot' | 'forgot-password';
 
 // ============================================================================
 // INTERFACES PRINCIPALES ✅

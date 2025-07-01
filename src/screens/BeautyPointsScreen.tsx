@@ -6,11 +6,16 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { modernColors, modernTypography, modernShadows } from '../styles';
 import { api, handleApiError } from '../services/api';
+
+// ⭐ OBTENER DIMENSIONES DE PANTALLA
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface BeautyPointsScreenProps {
   navigation: any;
@@ -253,15 +258,16 @@ const BeautyPointsScreen = ({ navigation, route }: BeautyPointsScreenProps) => {
   );
 };
 
-const styles = {
+// ⭐ ESTILOS CORREGIDOS CON StyleSheet.create Y DIMENSIONES NUMÉRICAS
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: modernColors.background,
   },
   header: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -269,13 +275,13 @@ const styles = {
   },
   headerTitle: {
     fontSize: modernTypography.fontSizeModern.lg,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: modernColors.text,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loadingText: {
     fontSize: modernTypography.fontSizeModern.base,
@@ -290,19 +296,20 @@ const styles = {
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
-    alignItems: 'center' as const,
+    alignItems: 'center',
     ...modernShadows.medium,
   },
+  // ⭐ CORREGIDO: width como número
   pointsHeader: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: SCREEN_WIDTH - 88, // ⭐ NÚMERO EN VEZ DE STRING
     marginBottom: 20,
   },
   tierContainer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tierEmoji: {
     fontSize: 20,
@@ -310,11 +317,11 @@ const styles = {
   },
   tierText: {
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
   vipBadge: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: modernColors.accentLight + '20',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -323,12 +330,12 @@ const styles = {
   vipText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.accent,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     marginLeft: 4,
   },
   pointsAmount: {
     fontSize: 48,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: modernColors.accent,
     marginBottom: 8,
   },
@@ -337,23 +344,25 @@ const styles = {
     color: modernColors.gray600,
     marginBottom: 20,
   },
+  // ⭐ CORREGIDO: width como número
   progressContainer: {
-    width: '100%',
+    width: SCREEN_WIDTH - 88, // ⭐ NÚMERO EN VEZ DE STRING
   },
   progressText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.gray600,
-    textAlign: 'center' as const,
+    textAlign: 'center',
     marginBottom: 12,
   },
   progressBar: {
     height: 8,
     backgroundColor: modernColors.gray200,
     borderRadius: 4,
-    overflow: 'hidden' as const,
+    overflow: 'hidden',
   },
+  // ⭐ CORREGIDO: height como número
   progressFill: {
-    height: '100%',
+    height: 8, // ⭐ NÚMERO EN VEZ DE STRING
     backgroundColor: modernColors.accent,
     borderRadius: 4,
   },
@@ -362,7 +371,7 @@ const styles = {
   },
   sectionTitle: {
     fontSize: modernTypography.fontSizeModern.lg,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: modernColors.text,
     marginBottom: 16,
   },
@@ -371,8 +380,8 @@ const styles = {
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     ...modernShadows.small,
   },
   lockedReward: {
@@ -383,7 +392,7 @@ const styles = {
   },
   rewardName: {
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: modernColors.text,
     marginBottom: 4,
   },
@@ -393,23 +402,23 @@ const styles = {
     marginBottom: 8,
   },
   rewardCost: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rewardCostText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.accent,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     marginLeft: 4,
   },
   rewardAction: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   redeemText: {
     fontSize: modernTypography.fontSizeModern.sm,
     color: modernColors.primary,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     marginRight: 4,
   },
   lockIcon: {
@@ -419,8 +428,8 @@ const styles = {
     color: modernColors.gray400,
   },
   historyItem: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: modernColors.surface,
     borderRadius: 12,
     padding: 16,
@@ -432,8 +441,8 @@ const styles = {
     height: 40,
     backgroundColor: modernColors.gray100,
     borderRadius: 20,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   historyEmoji: {
@@ -444,7 +453,7 @@ const styles = {
   },
   historyTreatment: {
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     color: modernColors.text,
     marginBottom: 2,
   },
@@ -454,9 +463,9 @@ const styles = {
   },
   historyPoints: {
     fontSize: modernTypography.fontSizeModern.base,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: modernColors.accent,
   },
-};
+});
 
 export default BeautyPointsScreen;

@@ -196,6 +196,14 @@ export const shadows = {
     elevation: 2,
   },
   
+  subtle: { // ⭐ AGREGADO PARA FIX ERROR
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  
   md: {
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 4 },
@@ -369,12 +377,13 @@ export const accessibility = {
 } as const;
 
 // ============================================================================
-// 💎 BACKWARD COMPATIBILITY - MODERNCOLORS
+// 💎 BACKWARD COMPATIBILITY - MODERNCOLORS - CORREGIDO
 // ============================================================================
 export const modernColors = {
   // Principales
   primary: colors.primary,
   primaryDark: colors.gray800,
+  primaryLight: colors.gray600, // ⭐ AGREGADO PARA FIX ERROR
   accent: colors.accent,
   accentLight: colors.warning,
   secondary: colors.secondary,
@@ -478,14 +487,17 @@ export const modernSpacing = {
 } as const;
 
 // ============================================================================
-// ✍️ MODERNTYPOGRAPHY COMPLETO
+// ✍️ MODERNTYPOGRAPHY COMPLETO - CORREGIDO
 // ============================================================================
 export const modernTypography = {
   // Font families
   fontFamily: typography.families,
   
-  // Sizes modernos
-  fontSizeModern: typography.sizes,
+  // Sizes modernos - CORREGIDO CON xl2
+  fontSizeModern: {
+    ...typography.sizes,
+    xl2: isSmallDevice ? 26 : 28, // ⭐ AGREGADO PARA FIX ERROR
+  },
   
   // Weights modernos
   fontWeight: {
@@ -523,7 +535,7 @@ export const modernTypography = {
 // 🌟 MODERNSHADOWS COMPLETO
 // ============================================================================
 export const modernShadows = {
-  subtle: shadows.soft,
+  subtle: shadows.subtle, // ⭐ CORREGIDO - AHORA EXISTE
   soft: shadows.soft,
   sm: shadows.sm,
   small: shadows.sm,
@@ -736,6 +748,7 @@ if (__DEV__) {
   console.log('✅ Espaciado cómodo:', spacing.aesthetic.cardSpacing, 'px cards');
   console.log('✅ Touch targets:', accessibility.touchTargets.comfortable, 'px');
   console.log('✅ Colores profesionales cargados');
+  console.log('⭐ CORRECCIONES APLICADAS: primaryLight, xl2, subtle');
 }
 
 // ============================================================================

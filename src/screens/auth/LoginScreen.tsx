@@ -36,7 +36,7 @@ import { setUser } from '../../store/slices/authSlice';
 import { authAPI } from '../../services/api';
 
 // ✅ IMPORTAR TIPOS DESDE auth.ts
-import type { User, LoginCredentials, mapConnectionStatus } from '../../types/auth';
+import type { User, LoginCredentials } from '../../types/auth';
 
 // ============================================================================
 // TIPOS PARA NAVIGATION ✅
@@ -46,6 +46,12 @@ interface LoginScreenProps {
     navigate: (screen: string, params?: any) => void;
     replace: (screen: string) => void;
   };
+}
+
+// ⭐ TIPOS CORREGIDOS PARA ConnectionStatus
+interface ConnectionStatusProps {
+  status: 'checking' | 'connected' | 'error';
+  onRetry: () => Promise<void>; // ⭐ AGREGADO - REQUERIDO POR ERROR
 }
 
 // ============================================================================
@@ -120,8 +126,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     checkBackendConnection();
   }, []);
 
-  // ✅ FUNCIÓN PARA VERIFICAR CONEXIÓN
-  const checkBackendConnection = async () => {
+  // ⭐ FUNCIÓN PARA VERIFICAR CONEXIÓN - CORREGIDA COMO ASYNC
+  const checkBackendConnection = async (): Promise<void> => {
     try {
       setConnectionStatus('checking');
       const response = await fetch('http://192.168.1.174:3000/health'); // ✅ TU IP
@@ -241,7 +247,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     navigation.navigate('Register');
   };
 
-  // ✅ MAPEAR CONNECTION STATUS PARA COMPONENTES
+  // ⭐ MAPEAR CONNECTION STATUS PARA COMPONENTES - CORREGIDO
   const getConnectionStatusForComponents = (status: typeof connectionStatus): 'checking' | 'connected' | 'error' => {
     if (status === 'disconnected') return 'error';
     return status as 'checking' | 'connected' | 'error';
@@ -260,10 +266,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ✅ ESTADO DE CONEXIÓN - STATUS MAPEADO */}
+        {/* ⭐ ESTADO DE CONEXIÓN - CORREGIDO CON onRetry */}
         <ConnectionStatus 
           status={getConnectionStatusForComponents(connectionStatus)}
-          onRetry={checkBackendConnection}
+          onRetry={checkBackendConnection} // ⭐ AHORA ES Promise<void>
         />
 
         {/* ✅ HEADER PRINCIPAL */}

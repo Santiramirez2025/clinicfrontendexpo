@@ -96,7 +96,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
   });
   
   const [errors, setErrors] = useState<Partial<AuthFormData>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLocalLoading] = useState(false); // ⭐ CAMBIADO: setLocalLoading para evitar conflictos
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   // ============================================================================
@@ -250,7 +250,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
   // ============================================================================
   const login = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
     try {
-      dispatch(setLoading(true));
+      dispatch(setLoading(true)); // ⭐ CORREGIDO: dispatch correcto
       dispatch(setError(null));
 
       const response = await authAPI.login(credentials.email, credentials.password);
@@ -282,13 +282,13 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
       dispatch(setError(error.message || 'Error al iniciar sesión'));
       return false;
     } finally {
-      dispatch(setLoading(false));
+      dispatch(setLoading(false)); // ⭐ CORREGIDO: dispatch correcto
     }
   }, [dispatch, createUserPayload]);
 
   const register = useCallback(async (data: RegisterData): Promise<boolean> => {
     try {
-      dispatch(setLoading(true));
+      dispatch(setLoading(true)); // ⭐ CORREGIDO: dispatch correcto
       dispatch(setError(null));
 
       const response = await authAPI.register(data);
@@ -319,7 +319,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
       dispatch(setError(error.message || 'Error al registrarse'));
       return false;
     } finally {
-      dispatch(setLoading(false));
+      dispatch(setLoading(false)); // ⭐ CORREGIDO: dispatch correcto
     }
   }, [dispatch, createUserPayload]);
 
@@ -342,7 +342,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
 
   const updateProfile = useCallback(async (data: Partial<User>): Promise<boolean> => {
     try {
-      dispatch(setLoading(true));
+      dispatch(setLoading(true)); // ⭐ CORREGIDO: dispatch correcto
       dispatch(setError(null));
 
       // Aquí iría la llamada al API cuando esté disponible
@@ -364,7 +364,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
       dispatch(setError(error.message || 'Error al actualizar perfil'));
       return false;
     } finally {
-      dispatch(setLoading(false));
+      dispatch(setLoading(false)); // ⭐ CORREGIDO: dispatch correcto
     }
   }, [dispatch, user]);
 
@@ -429,7 +429,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
     }
 
     try {
-      setLoading(true);
+      setLocalLoading(true); // ⭐ CORREGIDO: usar setLocalLoading
 
       switch (type) {
         case 'login':
@@ -457,7 +457,7 @@ export const useAuth = (type?: AuthType): ExtendedUseAuthReturn => {
       
       Alert.alert('Error', userMessage);
     } finally {
-      setLoading(false);
+      setLocalLoading(false); // ⭐ CORREGIDO: usar setLocalLoading
     }
   }, [
     validateForm, 
